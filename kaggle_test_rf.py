@@ -381,3 +381,6 @@ joblib.dump(rf_model, 'random_forest_model.pkl')
 # RMSE: $241.59
 # MAE: $177.93
 # R²: 0.5955
+
+#          name     rmse      mae     r2
+# Random Forest 228.0427 153.7749 0.6614
