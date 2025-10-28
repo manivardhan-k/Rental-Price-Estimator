@@ -127,7 +127,7 @@ X = df.drop(columns=['price'])  # Drop region but keep region_freq
 y = np.log1p(df['price'])  # Log transform target for better distribution
 
 # # Bin target into quantiles for stratification
-# y_binned = pd.qcut(df['price'], q=10, labels=False, duplicates="drop")
+y_binned = pd.qcut(df['price'], q=10, labels=False, duplicates="drop")
 
 # # Visualize the price distribution before and after log transform
 # sns.histplot(df['price'], bins=50, kde=True)
