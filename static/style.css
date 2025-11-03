@@ -1,0 +1,123 @@
+/* General container */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f5f5f5b0;
+  }
+  
+  .container {
+    max-width: 1300px;
+    margin: 20px auto;
+    padding: 10px;
+  }
+  
+  /* Top section: inputs */
+  .input-section {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 125px;
+    box-shadow: 0 2px 8px rgba(79, 0, 116, 0.5);
+    margin-bottom: 30px;
+    text-align: center;
+    /* height: 50vh; */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* centers vertically */
+    align-items: center; /* centers horizontally */
+  }
+
+  .input-section h2 {
+    margin-bottom: 30px;
+  }
+  
+  .inputs {
+    display: grid;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .inputs input {
+    padding: 10px;
+    width: auto;
+    border: 2px solid #4f0074;
+    border-radius: 25px;
+    text-indent: 1.5ch;
+  }
+
+  .house-details, .house-location, .alt-house-location {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 5px;
+  }
+
+  .alt-house-location {       /* make this hidden by default */
+    display: none;
+  }
+  
+  #search-btn {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background: #4f0074;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+  }
+  
+  #search-btn:hover {
+    background: #802fa6;
+  }
+
+  .section-divider {
+    border: none;
+    height: 4px;
+    background-color: #4f0074;
+    margin: 30px 0;
+    border-style: none;
+  }
+  
+  /* Bottom section: map & chart */
+  .output-section {
+    display: flex;
+    /* flex-wrap: wrap; */
+    gap: 20px;
+    justify-content: space-between;
+    height: 55%;
+  }
+
+  .vertical-divider {
+    width: 4px;
+    background-color: #4f0074;
+    margin: 0 10px;
+    border-style: none;
+  }
+  
+  #map-container, #chart-container {
+    background: #ffffff;
+    flex: 1 1 45%;
+    min-height: 400px;
+    padding: 15px;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(79, 0, 116, 0.5);
+  }
+  
+  #map-container h3, #chart-container h3{
+    text-align: center;
+    margin-bottom: 15px;
+  }
+
+  /* #map { 
+    width: 100%;
+    height: 100%;
+    border-radius: 40px;
+    background: #e0e0e0; 
+  }
+  
+  canvas#chart {
+    width: 100% !important;
+    height: 100% !important;
+  } */
+  

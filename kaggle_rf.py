@@ -11,6 +11,8 @@ import catboost as cb
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
+import random
+from io import StringIO
 import warnings
 warnings.filterwarnings('ignore')
 
@@ -19,12 +21,18 @@ pd.set_option("display.max_rows", 100)
 
 # Load data
 # df = pd.read_csv("housing.csv") #Full dataset
-# df = pd.read_csv("housing_sample2k.csv") #Sample dataset 1
-df = pd.read_csv("housing_sample10k.csv") #Sample dataset 2
-print(f"Loaded {len(df)} rows")
-print(f"Dataset shape: {df.shape}")
-print("\nMissing values:")
-print(df.isnull().sum().sort_values(ascending=False))
+df = pd.read_csv("housing_sample2k.csv") #Sample dataset 1
+# df = pd.read_csv("housing_sample10k.csv") #Sample dataset 2
+# df = pd.read_csv("housing_sample20k.csv") #Sample dataset 3
+# df = pd.read_csv("housing_sample50k.csv") #Sample dataset 4
+
+# print(df.head())
+# print(df.columns)
+
+# print(f"Loaded {len(df)} rows")
+# print(f"Dataset shape: {df.shape}")
+# print("\nMissing values:")
+# print(df.isnull().sum().sort_values(ascending=False))
 
 # sns.stripplot(x=df['price'])
 # plt.show()
@@ -75,6 +83,37 @@ df['type'] = df['type'].fillna('Other')
 df['laundry_options'] = df['laundry_options'].fillna('none')
 df['parking_options'] = df['parking_options'].fillna('none')
 
+# ===============================
+# ADDING HISTORIC DATA
+# ===============================
+
+# Load the historical data
+# historic_df = pd.read_csv("state_historic.csv")
+
+# Normalize state codes to lowercase for consistency
+# historic_df['state'] = historic_df['state'].str.strip().str.lower()
+# df['state'] = df['state'].str.strip().str.lower()
+
+# Identify numeric/price columns (assuming they are year columns)
+# price_cols = [col for col in historic_df.columns if col.isdigit()]
+
+# Compute engineered features
+# historic_df['price_2025'] = historic_df['2025']
+# historic_df['price_growth_5y'] = (historic_df['2025'] - historic_df['2020']) / historic_df['2020']
+# historic_df['avg_annual_growth'] = ((historic_df['2025'] / historic_df['2020']) ** (1/5)) - 1
+# historic_df['volatility'] = historic_df[price_cols].std(axis=1)
+# historic_df['recent_trend'] = (historic_df['2025'] - historic_df['2024']) / historic_df['2024']
+
+# Keep only relevant columns
+# historic_features = historic_df[['state', 'price_2025']] #'price_growth_5y', 'avg_annual_growth', 
+                                # 'volatility', 'recent_trend']]
+
+# Merge into your main df
+# df = df.merge(historic_features, how='left', on='state')
+
+# df['price_2025'] = df['price_2025'] * 0.8 + np.random.normal(0, df['price_2025'].std() * 0.05)
+
+# print("------------\n",df.head())
 
 # ===============================
 # ADVANCED FEATURE ENGINEERING
@@ -91,11 +130,15 @@ def frequency_encode(df, column):
     freq = df[column].value_counts(normalize=True).to_dict()
     return df[column].map(freq)
 
-encoder = TargetEncoder(cols=['region'])
-df['region_encoded'] = encoder.fit_transform(df[['region']], df['price'])
+# encoder = TargetEncoder(cols=['region'])
+# df['region_encoded'] = encoder.fit_transform(df[['region']], df['price'])
+
+encoder = TargetEncoder(cols=['region', 'type'])
+encoded = encoder.fit_transform(df[['region', 'type']], df['price'])
+df = pd.concat([df, encoded.add_suffix('_encoded')], axis=1)
 
 
-cat_cols = ['type', 'state']
+cat_cols = ['state']
 label_encoders = {}
 for col in cat_cols:
     le = LabelEncoder()
@@ -137,7 +180,7 @@ y_binned = pd.qcut(df['price'], q=10, labels=False, duplicates="drop")
 
 
 # # Split data
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=33, stratify=y_binned) #Sample dataset 2
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=33, stratify=y_binned) #Sample dataset 2
 
 
 X_train = X_train.apply(pd.to_numeric, errors='coerce')
@@ -294,29 +337,48 @@ models_results = []
 # print(cat_search.best_params_)
 # models_results.append(evaluate_model(cat_best, X_train, X_test, y_train, y_test, "CatBoost"))
 
+import time
+
+start = time.time()
 
 # 4. Random Forest
 print("\nOptimizing Random Forest...")
 
-# 1️⃣ Define model with fixed params
-rf_model = RandomForestRegressor(
-    n_estimators=600,
-    max_depth=40,
-    min_samples_split=10,
-    min_samples_leaf=4,
-    max_features=0.8,
-    criterion='absolute_error',
-    random_state=33,
+# Random Forest hyperparameter grid
+rf_params = {
+    'n_estimators': [100],
+    'max_depth': [40],
+    'min_samples_split': [10],
+    'min_samples_leaf': [4],
+    'max_features': [0.8],
+    'criterion': ['absolute_error']
+}
+
+rf_model = RandomForestRegressor(random_state=33, n_jobs=-1)
+
+rf_search = RandomizedSearchCV(
+    estimator=rf_model,
+    param_distributions=rf_params,
+    n_iter=1,
+    scoring=rmse_scorer,
+    cv=5,
+    verbose=1,
+    random_state=42,
     n_jobs=-1
 )
 
-# 2️⃣ Fit the model
-rf_model.fit(X_train_scaled, y_train)
+rf_search.fit(X_train, y_train)
+rf_best = rf_search.best_estimator_
+print(rf_search.best_params_)
 
 # 3️⃣ Evaluate
 models_results.append(
-    evaluate_model(rf_model, X_train_scaled, X_test_scaled, y_train, y_test, "Random Forest")
+    evaluate_model(rf_best, X_train_scaled, X_test_scaled, y_train, y_test, "Random Forest")
 )
+
+end = time.time()
+
+print(f"Training took {(end - start)/60:.2f} minutes")
 
 # ===============================
 # RESULTS SUMMARY
@@ -353,27 +415,48 @@ if hasattr(best_single_model, 'feature_importances_'):
     print(importance_df.to_string(index=False))
 
     # Plot feature importance
-    plt.figure(figsize=(10, 8))
-    plt.barh(importance_df.head(15)['feature'][::-1], importance_df.head(15)['importance'][::-1])
-    plt.title(f'Top 15 Feature Importance ({best_model["name"]})')
-    plt.xlabel('Importance')
-    plt.tight_layout()
-    plt.show()
-
+    # plt.figure(figsize=(10, 8))
+    # plt.barh(importance_df.head(15)['feature'][::-1], importance_df.head(15)['importance'][::-1])
+    # plt.title(f'Top 15 Feature Importance ({best_model["name"]})')
+    # plt.xlabel('Importance')
+    # plt.tight_layout()
+    # plt.show()
 
 # ===============================
 # MODEL PERSISTENCE
 # ===============================
-print("\nSaving the best model...")
+# print("\nSaving the best model...")
 
 # Save the model
-joblib.dump(rf_model, 'random_forest_model.pkl')
+# # # # # # # # never run this # # # joblib.dump(best_model['model'], 'random_forest_model.pkl')
 
 # # Load the model later
-# rf_loaded = joblib.load('random_forest_model.pkl')
+rf_loaded = joblib.load('random_forest_model.pkl')
 
 # # Make predictions with the loaded model
-# y_pred = rf_loaded.predict(X_test_scaled)
+y_pred = rf_loaded.predict(X_test_scaled)
+
+# # Convert from log space to original price scale
+# y_te_orig = np.expm1(y_test)
+# preds_orig = np.expm1(y_pred)
+
+# # Compute metrics in original scale
+# rmse = np.sqrt(mean_squared_error(y_te_orig, preds_orig))
+# mae = mean_absolute_error(y_te_orig, preds_orig)
+# r2 = r2_score(y_te_orig, preds_orig)
+
+# print(f"RMSE: ${rmse:,.2f}")
+# print(f"MAE: ${mae:,.2f}")
+# print(f"R²: {r2:.4f}")
+
+
+
+
+
+
+
+
+
 
 # {'n_estimators': 600, 'min_samples_split': 10, 'min_samples_leaf': 4, 'max_features': 0.8, 'max_depth': 40, 'criterion': 'absolute_error'}
 
@@ -382,5 +465,34 @@ joblib.dump(rf_model, 'random_forest_model.pkl')
 # MAE: $177.93
 # R²: 0.5955
 
+# Target encoded region
 #          name     rmse      mae     r2
 # Random Forest 228.0427 153.7749 0.6614
+
+# Target encoded region and type
+#          name     rmse      mae     r2
+# Random Forest 225.7749 152.6099 0.6681
+
+# Test 0.15
+#          name     rmse      mae     r2
+# Random Forest 223.0775 151.5975 0.6713
+
+# Sample 20k
+#          name     rmse      mae     r2
+# Random Forest 219.3287 141.0897 0.6824
+
+# Sample 50k
+# Training took 76.77 minutes
+#          name     rmse      mae     r2
+# Random Forest 199.3254 119.2751 0.7431
+
+# Sample 50k - 100 n_estimaters
+# Training took 12.87 minutes
+#          name     rmse      mae     r2
+# Random Forest 200.3836 120.2867 0.7403
+
+# Sample 385k - 100 n_estimaters
+# Should take ~10.5 hrs
+# Training took 752.65 minutes
+        #  name     rmse     mae     r2
+# Random Forest 150.5183 73.0027 0.8541
