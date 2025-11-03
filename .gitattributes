@@ -1,3 +1,5 @@
 *.pkl filter=lfs diff=lfs merge=lfs -text
 housing_sample2k.csv filter=lfs diff=lfs merge=lfs -text
 housing_sample10k.csv filter=lfs diff=lfs merge=lfs -text
+housing_sample50k.csv filter=lfs diff=lfs merge=lfs -text
+housing_sample20k.csv filter=lfs diff=lfs merge=lfs -text
