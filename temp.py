@@ -1,6 +1,6 @@
 import random
 
-filename = "housing.csv"
+filename = "csvs/housing.csv"
 
 def sample_csv(path, k, has_header=True):
     sample = []
@@ -18,5 +18,5 @@ def sample_csv(path, k, has_header=True):
     return sample
 
 sample_lines = sample_csv(filename, 50000)
-with open("housing_sample50k.csv", "w", encoding="utf-8") as f:
+with open("csvs/housing_sample50k.csv", "w", encoding="utf-8") as f:
     f.writelines(sample_lines)

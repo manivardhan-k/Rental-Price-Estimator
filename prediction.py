@@ -5,10 +5,10 @@ import joblib
 # ===============================
 # LOAD MODELS AND ENCODERS
 # ===============================
-rf_loaded = joblib.load('random_forest_model.pkl')
-encoder = joblib.load('target_encoder.pkl')
-label_encoders = joblib.load('label_encoders.pkl')
-scaler = joblib.load('scaler.pkl')
+rf_loaded = joblib.load('pkls/random_forest_model.pkl')
+encoder = joblib.load('pkls/target_encoder.pkl')
+label_encoders = joblib.load('pkls/label_encoders.pkl')
+scaler = joblib.load('pkls/scaler.pkl')
 
 # ===============================
 # USER INPUT
@@ -89,7 +89,7 @@ print(f"💰 Estimated 2020 price: ${predicted_price_2020:,.2f}")
 # ===============================
 # FORECAST 2025 PRICE
 # ===============================
-historic_df = pd.read_csv("state_historic.csv")
+historic_df = pd.read_csv("csvs/state_historic.csv")
 historic_df['state'] = historic_df['state'].str.strip().str.lower()
 historic_df = historic_df[['state', '2020', '2025']]
 

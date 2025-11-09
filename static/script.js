@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Load cities from JSON file (organized by state)
   try {
-    const response = await fetch('static/us-cities.json');
+    const response = await fetch('us-cities.json');
     if (!response.ok) throw new Error("City data load failed");
     citiesByState = await response.json();
   } catch (error) {
@@ -56,28 +56,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     citySelect.disabled = cityList.length === 0;
   });
   
-  
-  // ===============================
-  // SEARCH BUTTON HANDLER
-  // ===============================
-  document.getElementById('search-btn').addEventListener('click', async () => {
-    const sqft = document.getElementById('sqft').value;
-    const beds = document.getElementById('beds').value;
-    const baths = document.getElementById('baths').value;
-    const type = document.getElementById('type').value;
-    const state = stateSelect.value;
-    const city = citySelect.value;
-    const lat = document.getElementById('lat').value;
-    const long = document.getElementById('long').value;
-    
-    // Validate required fields
-    if (!sqft || !beds || !baths || !type || !state || !city || !lat || !long) {
-      alert('Please fill in all required fields');
-      return;
-    }
-    
-    // Prepare data for API
-    const data = {
+// ===============================
+// SEARCH BUTTON HANDLER
+// ===============================
+document.getElementById('search-btn').addEventListener('click', async () => {
+  // Define the default values based on your request
+  const DEFAULT_VALUES = {
+      sqft: '700',
+      beds: '1',
+      baths: '1.0',
+      type: 'apartment',
+      state: 'MI', // Using uppercase state code for the select element
+      city: 'flint',
+      lat: '42.9435',
+      long: '-83.6072',
+      // Checkbox defaults (can be 0 or 1, but we read the .checked status)
+      cats_allowed: 1,
+      dogs_allowed: 1,
+      smoking_allowed: 1,
+      wheelchair_access: 0,
+      electric_vehicle_charge: 0,
+      comes_furnished: 0,
+      has_laundry: 1,
+      has_parking: 1
+  };
+
+  // --- Input Values (Read from DOM, use default if empty) ---
+
+  // For text inputs (sqft, beds, baths, type, lat, long)
+  const sqft = document.getElementById('sqft').value || DEFAULT_VALUES.sqft;
+  const beds = document.getElementById('beds').value || DEFAULT_VALUES.beds;
+  const baths = document.getElementById('baths').value || DEFAULT_VALUES.baths;
+  const type = document.getElementById('type').value || DEFAULT_VALUES.type;
+  const lat = document.getElementById('lat').value || DEFAULT_VALUES.lat;
+  const long = document.getElementById('long').value || DEFAULT_VALUES.long;
+
+  // For Select inputs (state and city)
+  // Note: If the user hasn't selected a state/city, the value will be empty, 
+  // so we apply the default state/city code.
+  const state = stateSelect.value || DEFAULT_VALUES.state;
+  const city = citySelect.value || DEFAULT_VALUES.city;
+
+  // Prepare data for API
+  const data = {
       sqft: sqft,
       beds: beds,
       baths: baths,
@@ -86,19 +107,21 @@ document.addEventListener('DOMContentLoaded', async () => {
       city: city,
       lat: lat,
       long: long,
-      // Add default values for additional features
-      cats_allowed: 0,
-      dogs_allowed: 0,
-      smoking_allowed: 0,
-      wheelchair_access: 0,
-      electric_vehicle_charge: 0,
-      comes_furnished: 0,
-      has_laundry: 0,
-      has_parking: 0
-    };
-    
-    console.log('Sending data:', data);
-    
+      
+      // Get checkbox values (simple way: if it's checked use 1, otherwise 0)
+      // If the checkbox is visible, we trust its checked state.
+      cats_allowed: document.getElementById('cats_allowed').checked ? 1 : 0,
+      dogs_allowed: document.getElementById('dogs_allowed').checked ? 1 : 0,
+      smoking_allowed: document.getElementById('smoking_allowed').checked ? 1 : 0,
+      wheelchair_access: document.getElementById('wheelchair_access').checked ? 1 : 0,
+      electric_vehicle_charge: document.getElementById('electric_vehicle_charge').checked ? 1 : 0,
+      comes_furnished: document.getElementById('comes_furnished').checked ? 1 : 0,
+      has_laundry: document.getElementById('has_laundry').checked ? 1 : 0,
+      has_parking: document.getElementById('has_parking').checked ? 1 : 0
+  };
+  
+  console.log('Sending data:', data);
+  
     try {
       // Show loading state
       const searchBtn = document.getElementById('search-btn');
@@ -113,7 +136,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
+        mode: 'cors'
       });
       
       console.log('Response status:', response.status);
@@ -134,9 +158,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 Estimated 2025 Price: ${result.price_2025.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
 Annual Growth Rate: ${(result.cagr * 100).toFixed(2)}%`);
         
+        createHistoricalChart(result.historical_prices, result.predicted_prices, result.state);
+      
         // TODO: Update chart and map with results
-        // updateChart(result);
         // updateMap(lat, long);
+
       } else {
         alert('Error: ' + result.error);
       }
@@ -153,6 +179,127 @@ Annual Growth Rate: ${(result.cagr * 100).toFixed(2)}%`);
     }
   });
 });
+
+// ===============================
+// CREATE ANIMATED HISTORICAL + PREDICTION CHART
+// ===============================
+function createHistoricalChart(historicalPrices, predictedPrices, state) {
+  // --- Sort historical prices ---
+  const sortedHist = Object.entries(historicalPrices).sort(([a], [b]) => a.localeCompare(b));
+  const histYears = sortedHist.map(([year]) => year);
+  const histPrices = sortedHist.map(([, price]) => price);
+
+  // --- Sort predicted prices ---
+  const sortedPred = Object.entries(predictedPrices).sort(([a], [b]) => a.localeCompare(b));
+  const predYears = sortedPred.map(([year]) => year);
+  const predPrices = sortedPred.map(([, price]) => price);
+
+  // --- Dynamic axis ranges ---
+  const allPrices = histPrices.concat(predPrices);
+  const minPrice = Math.min(...allPrices);
+  const maxPrice = Math.max(...allPrices);
+  const paddingBottom = (maxPrice - minPrice) * 0.10;
+  const paddingTop = (maxPrice - minPrice) * 0.10;
+  const yAxisRange = [minPrice - paddingBottom, maxPrice + paddingTop];
+
+  const allYears = histYears.concat(predYears.map(y => +y));
+  const minYear = Math.min(...allYears);
+  const maxYear = Math.max(...allYears);
+  const xPadding = 0.75;
+  const xAxisRange = [minYear - xPadding, maxYear + xPadding];
+
+  // --- Prepare frames ---
+  const frames = [];
+  const maxLength = Math.max(histYears.length, predYears.length);
+
+  for (let i = 1; i <= maxLength; i++) {
+    const currentHistYears = histYears.slice(0, i);
+    const currentHistPrices = histPrices.slice(0, i);
+
+    const currentPredYears = predYears.slice(0, i);
+    const currentPredPrices = predPrices.slice(0, i);
+
+    frames.push({
+      name: i.toString(),
+      data: [
+        {
+          x: currentHistYears,
+          y: currentHistPrices,
+          mode: 'lines+markers',
+          line: { color: '#4f0074', width: 3 },
+          marker: { size: 8, color: '#4f0074' },
+          name: 'State Average'
+        },
+        {
+          x: currentPredYears,
+          y: currentPredPrices,
+          mode: 'lines+markers',
+          line: { color: '#ff7f0e', width: 3, dash: 'dot' },
+          marker: { size: 6, color: '#ff7f0e' },
+          name: 'Predicted House Price'
+        }
+      ]
+    });
+  }
+
+  // --- Initial Data (first points) ---
+  const initialData = [
+    {
+      x: [histYears[0]],
+      y: [histPrices[0]],
+      mode: 'lines+markers',
+      line: { color: '#4f0074', width: 3 },
+      marker: { size: 8, color: '#4f0074' },
+      name: 'State Average'
+    },
+    {
+      x: [predYears[0]],
+      y: [predPrices[0]],
+      mode: 'lines+markers',
+      line: { color: '#ff7f0e', width: 3, dash: 'dash' },
+      marker: { size: 6, color: '#ff7f0e' },
+      name: 'Predicted House Price'
+    }
+  ];
+
+  // --- Layout ---
+  const layout = {
+    title: { text: `Housing Price Trend in ${state} (${histYears[0]}–${histYears[histYears.length - 1]})`, font: { size: 18, color: '#4f0074' } },
+    xaxis: { title: 'Year', tickmode: 'linear', dtick: 1, range: xAxisRange },
+    yaxis: { title: 'Price ($)', tickformat: '$,.0f', range: yAxisRange, autorange: false },
+    hovermode: 'closest',
+    plot_bgcolor: '#f9f9f9',
+    paper_bgcolor: 'white',
+    margin: { t: 60, b: 60, l: 80, r: 40 },
+    legend: {
+      orientation: "h",       // horizontal
+      x: 0,                   // left
+      y: .92,                // above plot area
+      xanchor: "left",
+      yanchor: "bottom"
+    }
+  };
+
+  const config = { responsive: true, displayModeBar: true, displaylogo: false };
+
+  // --- Draw chart and animate ---
+  Plotly.react('chart', initialData, layout, config).then(() => {
+    Plotly.addFrames('chart', frames);
+    Plotly.animate('chart', frames.map(f => f.name), {
+      frame: { duration: 300, redraw: true },
+      transition: { duration: 300, easing: 'linear' },
+      mode: 'immediate'
+    });
+
+    // Move modebar
+    const modeBar = document.querySelector('#chart .modebar-container');
+    if (modeBar) {
+      modeBar.style.top = '35px';
+      modeBar.style.right = '35px';
+    }
+  });
+}
+
 
 // ===============================
 // HELPER: MAKE SELECT SEARCHABLE

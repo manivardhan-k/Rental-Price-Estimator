@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Price Prediction App</title>
-  <link rel="stylesheet" href="static/style.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
 <body>
@@ -116,6 +117,44 @@
           </div>
         </div>
 
+        <div class="house-amenities">
+          <h3>Property Features</h3>
+          <div class="checkbox-grid">
+            <div class="checkbox-group">
+              <input type="checkbox" id="cats_allowed">
+              <label for="cats_allowed">Cats Allowed</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" id="dogs_allowed">
+              <label for="dogs_allowed">Dogs Allowed</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" id="smoking_allowed">
+              <label for="smoking_allowed">Smoking Allowed</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" id="wheelchair_access">
+              <label for="wheelchair_access">Wheelchair Access</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" id="electric_vehicle_charge">
+              <label for="electric_vehicle_charge">EV Charging</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" id="comes_furnished">
+              <label for="comes_furnished">Comes Furnished</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" id="has_laundry">
+              <label for="has_laundry">Has Laundry</label>
+            </div>
+            <div class="checkbox-group">
+              <input type="checkbox" id="has_parking">
+              <label for="has_parking">Has Parking</label>
+            </div>
+          </div>
+        </div>
+
       </div>
       <button id="search-btn">Search</button>
     </section>
@@ -125,8 +164,8 @@
     <!-- Bottom Section: Map & Chart -->
     <section class="output-section">
       <div id="chart-container">
-        <h3>Chart</h3>
-        <canvas id="chart"></canvas>
+        <h3>Price Trend Analysis</h3>
+        <div id="chart"></div>
       </div>
 
       <hr class="vertical-divider">
@@ -139,6 +178,6 @@
     </section>
   </div>
 
-  <script src="static/script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

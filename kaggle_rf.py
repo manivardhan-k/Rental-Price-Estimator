@@ -22,11 +22,11 @@ pd.set_option("display.max_rows", 100)
 # https://www.kaggle.com/datasets/austinreese/usa-housing-listings
 
 # Load data
-df = pd.read_csv("housing.csv") #Full dataset
-# df = pd.read_csv("housing_sample2k.csv") #Sample dataset 1
-# df = pd.read_csv("housing_sample10k.csv") #Sample dataset 2
-# df = pd.read_csv("housing_sample20k.csv") #Sample dataset 3
-# df = pd.read_csv("housing_sample50k.csv") #Sample dataset 4
+# df = pd.read_csv("csvs/housing.csv") #Full dataset
+df = pd.read_csv("csvs/housing_sample2k.csv") #Sample dataset 1
+# df = pd.read_csv("csvs/housing_sample10k.csv") #Sample dataset 2
+# df = pd.read_csv("csvs/housing_sample20k.csv") #Sample dataset 3
+# df = pd.read_csv("csvs/housing_sample50k.csv") #Sample dataset 4
 
 # print(df.head())
 # print(df.columns)
@@ -90,7 +90,7 @@ df['parking_options'] = df['parking_options'].fillna('none')
 # ===============================
 
 # Load the historical data
-# historic_df = pd.read_csv("state_historic.csv")
+# historic_df = pd.read_csv("csvs/state_historic.csv")
 
 # Normalize state codes to lowercase for consistency
 # historic_df['state'] = historic_df['state'].str.strip().str.lower()
@@ -310,13 +310,13 @@ if hasattr(best_single_model, 'feature_importances_'):
 # print("\nSaving the best model...")
 
 # Save the model
-# # # # # # # # never run this # # # joblib.dump(best_model['model'], 'random_forest_model.pkl')
-# joblib.dump(encoder, 'target_encoder.pkl')
-# joblib.dump(label_encoders, 'label_encoders.pkl')
-# joblib.dump(scaler, 'scaler.pkl')
+# # # # # # # # never run this # # # joblib.dump(best_model['model'], 'pkls/random_forest_model.pkl')
+# joblib.dump(encoder, 'pkls/target_encoder.pkl')
+# joblib.dump(label_encoders, 'pkls/label_encoders.pkl')
+# joblib.dump(scaler, 'pkls/scaler.pkl')
 
 # # Load the model later
-# rf_loaded = joblib.load('random_forest_model.pkl')
+# rf_loaded = joblib.load('pkls/random_forest_model.pkl')
 
 # # Make predictions with the loaded model
 # y_pred = rf_loaded.predict(X_test_scaled)

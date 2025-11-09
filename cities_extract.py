@@ -2,7 +2,7 @@ import csv
 import json
 
 # Input CSV file (your dataset)
-input_file = 'us_cities_states_counties.csv'
+input_file = 'csvs/us_cities_states_counties.csv'
 # Output JSON file
 output_file = 'us-cities.json'
 
