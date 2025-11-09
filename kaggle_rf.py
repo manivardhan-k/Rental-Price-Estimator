@@ -19,9 +19,11 @@ warnings.filterwarnings('ignore')
 pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", 100)
 
+# https://www.kaggle.com/datasets/austinreese/usa-housing-listings
+
 # Load data
-# df = pd.read_csv("housing.csv") #Full dataset
-df = pd.read_csv("housing_sample2k.csv") #Sample dataset 1
+df = pd.read_csv("housing.csv") #Full dataset
+# df = pd.read_csv("housing_sample2k.csv") #Sample dataset 1
 # df = pd.read_csv("housing_sample10k.csv") #Sample dataset 2
 # df = pd.read_csv("housing_sample20k.csv") #Sample dataset 3
 # df = pd.read_csv("housing_sample50k.csv") #Sample dataset 4
@@ -115,6 +117,7 @@ df['parking_options'] = df['parking_options'].fillna('none')
 
 # print("------------\n",df.head())
 
+
 # ===============================
 # ADVANCED FEATURE ENGINEERING
 # ===============================
@@ -125,18 +128,10 @@ df['has_parking'] = (df['parking_options'] != 'none').astype(int)
 
 # print("------------\n",df.head())
 
-# Encode categorical variables with frequency encoding for high cardinality
-def frequency_encode(df, column):
-    freq = df[column].value_counts(normalize=True).to_dict()
-    return df[column].map(freq)
-
-# encoder = TargetEncoder(cols=['region'])
-# df['region_encoded'] = encoder.fit_transform(df[['region']], df['price'])
-
+# Encode categorical variables
 encoder = TargetEncoder(cols=['region', 'type'])
 encoded = encoder.fit_transform(df[['region', 'type']], df['price'])
 df = pd.concat([df, encoded.add_suffix('_encoded')], axis=1)
-
 
 cat_cols = ['state']
 label_encoders = {}
@@ -160,19 +155,20 @@ print(f"Final feature count: {df.shape[1] - 1}")
 print(f"Features: {[col for col in df.columns if col != 'price']}")
 
 df = df.dropna()
+# print(df.head())
 
-# # ===============================
-# # MODEL TRAINING WITH MULTIPLE ALGORITHMS
-# # ===============================
+# ===============================
+# MODEL TRAINING WITH MULTIPLE ALGORITHMS
+# ===============================
 
-# # Prepare data
+# Prepare data
 X = df.drop(columns=['price'])  # Drop region but keep region_freq
 y = np.log1p(df['price'])  # Log transform target for better distribution
 
-# # Bin target into quantiles for stratification
+# Bin target into quantiles for stratification
 y_binned = pd.qcut(df['price'], q=10, labels=False, duplicates="drop")
 
-# # Visualize the price distribution before and after log transform
+# Visualize the price distribution before and after log transform
 # sns.histplot(df['price'], bins=50, kde=True)
 
 # plt.tight_layout()
@@ -222,120 +218,6 @@ def rmse_log(y_true, y_pred):
 rmse_scorer = make_scorer(rmse_log, greater_is_better=False)
 
 models_results = []
-
-
-# 1. XGBoost with extensive hyperparameter tuning
-# print("Optimizing XGBoost...")
-# xgb_params = {
-#     'max_depth': [4, 6, 8, 10],
-#     'learning_rate': [0.01, 0.03, 0.05, 0.1],
-#     'n_estimators': [300, 500, 800, 1000],
-#     'subsample': [0.8, 0.9, 1.0],
-#     'colsample_bytree': [0.8, 0.9, 1.0],
-#     'reg_alpha': [0, 0.1, 0.5],
-#     'reg_lambda': [1, 1.5, 2],
-#     'min_child_weight': [1, 3, 5]
-# }
-
-# xgb_model = xgb.XGBRegressor(
-#     objective='reg:squarederror',
-#     random_state=33,
-#     n_jobs=-1,
-#     verbosity=0
-# )
-
-# xgb_search = RandomizedSearchCV(
-#     estimator=xgb_model,
-#     param_distributions=xgb_params,
-#     n_iter=50,
-#     scoring=rmse_scorer,
-#     cv=5,
-#     verbose=1,
-#     random_state=42,
-#     n_jobs=-1
-# )
-
-# xgb_search.fit(X_train, y_train)
-# xgb_best = xgb_search.best_estimator_
-# models_results.append(evaluate_model(xgb_best, X_train, X_test, y_train, y_test, "XGBoost"))
-
-# 2. LightGBM
-# print("\nOptimizing LightGBM...")
-# lgb_params = {
-#     'num_leaves': [31, 50, 100, 150],
-#     'learning_rate': [0.01, 0.03, 0.05, 0.1],
-#     'n_estimators': [300, 500, 800, 1000],
-#     'subsample': [0.8, 0.9, 1.0],
-#     'colsample_bytree': [0.8, 0.9, 1.0],
-#     'reg_alpha': [0, 0.1, 0.5],
-#     'reg_lambda': [1, 1.5, 2],
-#     'min_child_samples': [20, 50, 100]
-# }
-
-# lgb_model = lgb.LGBMRegressor(
-#     objective='regression',
-#     random_state=33,
-#     n_jobs=-1,
-#     verbosity=-1
-# )
-
-# lgb_search = RandomizedSearchCV(
-#     estimator=lgb_model,
-#     param_distributions=lgb_params,
-#     n_iter=40,
-#     scoring=rmse_scorer,
-#     cv=5,
-#     verbose=1,
-#     random_state=42,
-#     n_jobs=-1
-# )
-
-# lgb_search.fit(X_train, y_train)
-# lgb_best = lgb_search.best_estimator_
-# models_results.append(evaluate_model(lgb_best, X_train, X_test, y_train, y_test, "LightGBM"))
-
-# 3. CatBoost
-# print("\nOptimizing CatBoost...")
-# cat_params = {
-#     'depth': [6, 8, 10],
-#     'learning_rate': [0.01, 0.02, 0.03],
-#     'iterations': [1000, 2000, 3000, 5000], 
-#     'l2_leaf_reg': [3, 5, 7, 10, 15],
-#     'subsample': [0.7, 0.8, 0.9, 1.0],
-#     'colsample_bylevel': [0.7, 0.8, 1.0]
-# }
-
-# categorical_features = ['type_encoded', 'state_encoded']
-# cat_model = cb.CatBoostRegressor(
-#     loss_function='RMSE',
-#     random_seed=33,
-#     cat_features=categorical_features,
-#     iterations=5000,
-#     learning_rate=0.02,
-#     depth=8,
-#     l2_leaf_reg=5,  # can be tuned in search
-#     subsample=0.9,  # can be tuned
-#     colsample_bylevel=0.8,  # can be tuned
-#     early_stopping_rounds=200,
-#     verbose=False
-# )
-
-
-# cat_search = RandomizedSearchCV(
-#     estimator=cat_model,
-#     param_distributions=cat_params,
-#     n_iter=30,
-#     scoring=rmse_scorer,
-#     cv=5,
-#     verbose=1,
-#     random_state=42,
-#     n_jobs=-1
-# )
-
-# cat_search.fit(X_train, y_train, eval_set=(X_test, y_test))
-# cat_best = cat_search.best_estimator_
-# print(cat_search.best_params_)
-# models_results.append(evaluate_model(cat_best, X_train, X_test, y_train, y_test, "CatBoost"))
 
 import time
 
@@ -429,12 +311,15 @@ if hasattr(best_single_model, 'feature_importances_'):
 
 # Save the model
 # # # # # # # # never run this # # # joblib.dump(best_model['model'], 'random_forest_model.pkl')
+# joblib.dump(encoder, 'target_encoder.pkl')
+# joblib.dump(label_encoders, 'label_encoders.pkl')
+# joblib.dump(scaler, 'scaler.pkl')
 
 # # Load the model later
-rf_loaded = joblib.load('random_forest_model.pkl')
+# rf_loaded = joblib.load('random_forest_model.pkl')
 
 # # Make predictions with the loaded model
-y_pred = rf_loaded.predict(X_test_scaled)
+# y_pred = rf_loaded.predict(X_test_scaled)
 
 # # Convert from log space to original price scale
 # y_te_orig = np.expm1(y_test)
@@ -448,12 +333,6 @@ y_pred = rf_loaded.predict(X_test_scaled)
 # print(f"RMSE: ${rmse:,.2f}")
 # print(f"MAE: ${mae:,.2f}")
 # print(f"R²: {r2:.4f}")
-
-
-
-
-
-
 
 
 
