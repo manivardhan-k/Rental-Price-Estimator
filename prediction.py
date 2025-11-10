@@ -17,6 +17,7 @@ features = ['sqfeet', 'beds', 'baths', 'cats_allowed', 'dogs_allowed', 'smoking_
             'wheelchair_access', 'electric_vehicle_charge', 'comes_furnished', 'lat', 'long',
             'has_laundry', 'has_parking', 'region', 'type', 'state']
 
+
 int_cols = ['sqfeet', 'beds']
 float_cols = ['baths', 'lat', 'long']
 bool_cols = ['cats_allowed', 'dogs_allowed', 'smoking_allowed', 'wheelchair_access',

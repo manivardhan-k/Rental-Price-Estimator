@@ -77,6 +77,8 @@ def predict():
             'state': data.get('state', '').lower()
         }
 
+        print(user_input)
+
         # Prepare DataFrame
         user_df = pd.DataFrame([user_input])
 

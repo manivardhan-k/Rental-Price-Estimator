@@ -1,12 +1,64 @@
+let mapInstance = null;
+let marker = null;
+
+// Initialize map on page load
+function initializeMap() {
+  // Default center (Flint, MI)
+  const defaultLat = 42.9435;
+  const defaultLong = -83.6072;
+  
+  mapInstance = L.map('map').setView([defaultLat, defaultLong], 12);
+  
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(mapInstance);
+  
+  // Add default marker
+  marker = L.marker([defaultLat, defaultLong]).addTo(mapInstance)
+    .bindPopup('Property Location').openPopup();
+}
+
+// Update map with new coordinates
+function updateMap(lat, long, cityName = 'Property') {
+  if (!mapInstance) {
+    initializeMap();
+  }
+  
+  const latNum = parseFloat(lat);
+  const longNum = parseFloat(long);
+  
+  // Validate coordinates
+  if (isNaN(latNum) || isNaN(longNum)) {
+    console.error('Invalid coordinates');
+    return;
+  }
+  
+  // Remove old marker
+  if (marker) {
+    mapInstance.removeLayer(marker);
+  }
+  
+  // Add new marker
+  marker = L.marker([latNum, longNum]).addTo(mapInstance)
+    .bindPopup(`<strong>${cityName}</strong><br>Lat: ${latNum.toFixed(4)}<br>Long: ${longNum.toFixed(4)}`).openPopup();
+  
+  // Set map view to location with appropriate zoom
+  mapInstance.setView([latNum, longNum], 12);
+}
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
+  // Initialize map
+  initializeMap();
+
   // ===============================
   // AUTO-RESIZE TEXT INPUTS
   // ===============================
   const inputs = document.querySelectorAll(".input-group input[type='text']");
   inputs.forEach(input => {
     const placeholderLength = input.placeholder.length;
-    // Add a few extra characters for padding and cursor
     input.style.width = `${placeholderLength - 1}ch`; 
   });
 
@@ -56,74 +108,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     citySelect.disabled = cityList.length === 0;
   });
   
-// ===============================
-// SEARCH BUTTON HANDLER
-// ===============================
-document.getElementById('search-btn').addEventListener('click', async () => {
-  // Define the default values based on your request
-  const DEFAULT_VALUES = {
-      sqft: '700',
-      beds: '1',
-      baths: '1.0',
-      type: 'apartment',
-      state: 'MI', // Using uppercase state code for the select element
-      city: 'flint',
-      lat: '42.9435',
-      long: '-83.6072',
-      // Checkbox defaults (can be 0 or 1, but we read the .checked status)
-      cats_allowed: 1,
-      dogs_allowed: 1,
-      smoking_allowed: 1,
-      wheelchair_access: 0,
-      electric_vehicle_charge: 0,
-      comes_furnished: 0,
-      has_laundry: 1,
-      has_parking: 1
-  };
+  // ===============================
+  // SEARCH BUTTON HANDLER
+  // ===============================
+  document.getElementById('search-btn').addEventListener('click', async () => {
+    // Define the default values based on your request
+    const DEFAULT_VALUES = {
+        sqft: '700',
+        beds: '1',
+        baths: '1.0',
+        type: 'apartment',
+        state: 'mi',
+        city: 'flint',
+        lat: '42.9435',
+        long: '-83.6072',
+        cats_allowed: 1,
+        dogs_allowed: 1,
+        smoking_allowed: 1,
+        wheelchair_access: 0,
+        electric_vehicle_charge: 0,
+        comes_furnished: 0,
+        has_laundry: 1,
+        has_parking: 1
+    };
 
-  // --- Input Values (Read from DOM, use default if empty) ---
+    // --- Input Values (Read from DOM, use default if empty) ---
+    const sqft = document.getElementById('sqft').value || DEFAULT_VALUES.sqft;
+    const beds = document.getElementById('beds').value || DEFAULT_VALUES.beds;
+    const baths = document.getElementById('baths').value || DEFAULT_VALUES.baths;
+    const type = document.getElementById('type').value || DEFAULT_VALUES.type;
+    const lat = document.getElementById('lat').value || DEFAULT_VALUES.lat;
+    const long = document.getElementById('long').value || DEFAULT_VALUES.long;
+    const state = stateSelect.value || DEFAULT_VALUES.state;
+    const city = citySelect.value || DEFAULT_VALUES.city;
 
-  // For text inputs (sqft, beds, baths, type, lat, long)
-  const sqft = document.getElementById('sqft').value || DEFAULT_VALUES.sqft;
-  const beds = document.getElementById('beds').value || DEFAULT_VALUES.beds;
-  const baths = document.getElementById('baths').value || DEFAULT_VALUES.baths;
-  const type = document.getElementById('type').value || DEFAULT_VALUES.type;
-  const lat = document.getElementById('lat').value || DEFAULT_VALUES.lat;
-  const long = document.getElementById('long').value || DEFAULT_VALUES.long;
-
-  // For Select inputs (state and city)
-  // Note: If the user hasn't selected a state/city, the value will be empty, 
-  // so we apply the default state/city code.
-  const state = stateSelect.value || DEFAULT_VALUES.state;
-  const city = citySelect.value || DEFAULT_VALUES.city;
-
-  // Prepare data for API
-  const data = {
-      sqft: sqft,
-      beds: beds,
-      baths: baths,
-      type: type,
-      state: state,
-      city: city,
-      lat: lat,
-      long: long,
-      
-      // Get checkbox values (simple way: if it's checked use 1, otherwise 0)
-      // If the checkbox is visible, we trust its checked state.
-      cats_allowed: document.getElementById('cats_allowed').checked ? 1 : 0,
-      dogs_allowed: document.getElementById('dogs_allowed').checked ? 1 : 0,
-      smoking_allowed: document.getElementById('smoking_allowed').checked ? 1 : 0,
-      wheelchair_access: document.getElementById('wheelchair_access').checked ? 1 : 0,
-      electric_vehicle_charge: document.getElementById('electric_vehicle_charge').checked ? 1 : 0,
-      comes_furnished: document.getElementById('comes_furnished').checked ? 1 : 0,
-      has_laundry: document.getElementById('has_laundry').checked ? 1 : 0,
-      has_parking: document.getElementById('has_parking').checked ? 1 : 0
-  };
-  
-  console.log('Sending data:', data);
-  
+    // Prepare data for API
+    const data = {
+        sqft: sqft,
+        beds: beds,
+        baths: baths,
+        type: type,
+        state: state,
+        city: city,
+        lat: lat,
+        long: long,
+        cats_allowed: document.getElementById('cats_allowed').checked ? 1 : 0,
+        dogs_allowed: document.getElementById('dogs_allowed').checked ? 1 : 0,
+        smoking_allowed: document.getElementById('smoking_allowed').checked ? 1 : 0,
+        wheelchair_access: document.getElementById('wheelchair_access').checked ? 1 : 0,
+        electric_vehicle_charge: document.getElementById('electric_vehicle_charge').checked ? 1 : 0,
+        comes_furnished: document.getElementById('comes_furnished').checked ? 1 : 0,
+        has_laundry: document.getElementById('has_laundry').checked ? 1 : 0,
+        has_parking: document.getElementById('has_parking').checked ? 1 : 0
+    };
+    
+    console.log('Sending data:', data);
+    
     try {
-      // Show loading state
       const searchBtn = document.getElementById('search-btn');
       searchBtn.textContent = 'Loading...';
       searchBtn.disabled = true;
@@ -153,15 +194,13 @@ document.getElementById('search-btn').addEventListener('click', async () => {
       if (result.success) {
         console.log('Prediction results:', result);
         
-        // Display results (you can customize this)
-        alert(`Estimated 2020 Price: ${result.price_2020.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-Estimated 2025 Price: ${result.price_2025.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+        // Display results
+        alert(`Estimated 2020 Price: $${result.price_2020.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+Estimated 2025 Price: $${result.price_2025.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
 Annual Growth Rate: ${(result.cagr * 100).toFixed(2)}%`);
         
         createHistoricalChart(result.historical_prices, result.predicted_prices, result.state);
-      
-        // TODO: Update chart and map with results
-        // updateMap(lat, long);
+        updateMap(lat, long, city);
 
       } else {
         alert('Error: ' + result.error);
@@ -264,17 +303,17 @@ function createHistoricalChart(historicalPrices, predictedPrices, state) {
 
   // --- Layout ---
   const layout = {
-    title: { text: `Housing Price Trend in ${state} (${histYears[0]}–${histYears[histYears.length - 1]})`, font: { size: 18, color: '#4f0074' } },
+    title: { text: `Housing Price Trend in ${state} (${histYears[0]}–${histYears[histYears.length - 1]})`, font: { size: 18, color: '#4f0074' }},
     xaxis: { title: 'Year', tickmode: 'linear', dtick: 1, range: xAxisRange },
     yaxis: { title: 'Price ($)', tickformat: '$,.0f', range: yAxisRange, autorange: false },
     hovermode: 'closest',
     plot_bgcolor: '#f9f9f9',
     paper_bgcolor: 'white',
-    margin: { t: 60, b: 60, l: 80, r: 40 },
+    margin: { t: 35, b: 60, l: 80, r: 40 },
     legend: {
-      orientation: "h",       // horizontal
-      x: 0,                   // left
-      y: .92,                // above plot area
+      orientation: "h",
+      x: 0,
+      y: .92,
       xanchor: "left",
       yanchor: "bottom"
     }
@@ -294,12 +333,11 @@ function createHistoricalChart(historicalPrices, predictedPrices, state) {
     // Move modebar
     const modeBar = document.querySelector('#chart .modebar-container');
     if (modeBar) {
-      modeBar.style.top = '35px';
       modeBar.style.right = '35px';
+      modeBar.style.top = '361px';
     }
   });
 }
-
 
 // ===============================
 // HELPER: MAKE SELECT SEARCHABLE

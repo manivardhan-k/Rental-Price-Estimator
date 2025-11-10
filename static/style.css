@@ -62,7 +62,6 @@ body {
 
 /* Amenities/Features Section */
 .house-amenities {
-  /* margin-top: 20px; */
   width: 100%;
 }
 
@@ -128,7 +127,7 @@ body {
   display: flex;
   gap: 20px;
   justify-content: space-between;
-  height: 55%;
+  height: 600px;
 }
 
 .vertical-divider {
@@ -136,18 +135,36 @@ body {
   background-color: #4f0074;
   margin: 0 10px;
   border-style: none;
+  height: 80%;
+
 }
 
 #map-container, #chart-container {
   background: #ffffff;
   flex: 1 1 45%;
-  min-height: 400px;
+  height: 75%;
   padding: 15px;
   border-radius: 50px;
   box-shadow: 0 2px 8px rgba(79, 0, 116, 0.5);
+  display: flex;
+  flex-direction: column;
 }
 
 #map-container h3, #chart-container h3{
   text-align: center;
-  margin-bottom: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+/* Leaflet map styling */
+#map {
+  width: 100%;
+  flex: 1;
+  border-radius: 40px;
+}
+
+#chart {
+  width: 100%;
+  height: 100%;
 }
