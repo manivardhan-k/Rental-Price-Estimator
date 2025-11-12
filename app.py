@@ -37,17 +37,59 @@ def index():
 
 @app.route('/<path:path>')
 def serve_files(path):
-    # Check if file exists in static folder
     if os.path.exists(os.path.join('static', path)):
         return send_from_directory('static', path)
-    # Check if file exists in root directory (for JSON files, etc.)
     elif os.path.exists(path):
         return send_from_directory('.', path)
     else:
         return "File not found", 404
-    
+
 # ===============================
-# PREDICTION ENDPOINT (HOUSE + STATE CHARTS)
+# VALIDATION HELPER FUNCTION
+# ===============================
+def validate_input(data):
+    """Validate that all required fields are provided and not empty"""
+    required_fields = {
+        'sqft': 'Square Footage',
+        'beds': 'Beds',
+        'baths': 'Baths',
+        'type': 'House Type',
+        'state': 'State',
+        'city': 'City',
+        'lat': 'Latitude',
+        'long': 'Longitude'
+    }
+    
+    errors = []
+    
+    for field, label in required_fields.items():
+        value = data.get(field, '').strip() if isinstance(data.get(field), str) else data.get(field)
+        
+        if value == '' or value is None:
+            errors.append(f"{label} is required")
+            continue
+            
+        # Validate numeric fields
+        if field in ['sqft', 'beds']:
+            try:
+                val = int(value)
+                if val <= 0:
+                    errors.append(f"{label} must be greater than 0")
+            except (ValueError, TypeError):
+                errors.append(f"{label} must be a valid whole number")
+                
+        elif field in ['baths', 'lat', 'long']:
+            try:
+                val = float(value)
+                if field == 'baths' and val < 0:
+                    errors.append(f"{label} cannot be negative")
+            except (ValueError, TypeError):
+                errors.append(f"{label} must be a valid number")
+    
+    return errors
+
+# ===============================
+# PREDICTION ENDPOINT
 # ===============================
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def predict():
@@ -56,14 +98,23 @@ def predict():
     
     try:
         data = request.json
+        
+        # Validate input
+        errors = validate_input(data)
+        if errors:
+            return jsonify({
+                'success': False,
+                'error': 'Validation failed',
+                'details': errors
+            }), 400
 
-        # Parse user input
+        # Parse user input - no defaults, values are guaranteed from validation
         user_input = {
-            'region': data.get('city', '').lower(),
-            'type': data.get('type', '').lower(),
-            'sqfeet': int(data.get('sqft', 0)),
-            'beds': int(data.get('beds', 0)),
-            'baths': float(data.get('baths', 0)),
+            'region': str(data.get('city', '')).lower(),
+            'type': str(data.get('type', '')).lower(),
+            'sqfeet': int(data.get('sqft')),
+            'beds': int(data.get('beds')),
+            'baths': float(data.get('baths')),
             'cats_allowed': int(data.get('cats_allowed', 0)),
             'dogs_allowed': int(data.get('dogs_allowed', 0)),
             'smoking_allowed': int(data.get('smoking_allowed', 0)),
@@ -72,12 +123,12 @@ def predict():
             'electric_vehicle_charge': int(data.get('electric_vehicle_charge', 0)),
             'has_laundry': int(data.get('has_laundry', 0)),
             'has_parking': int(data.get('has_parking', 0)),
-            'lat': float(data.get('lat', 0)),
-            'long': float(data.get('long', 0)),
-            'state': data.get('state', '').lower()
+            'lat': float(data.get('lat')),
+            'long': float(data.get('long')),
+            'state': str(data.get('state', '')).lower()
         }
 
-        print(user_input)
+        print(f"Processing prediction with input: {user_input}")
 
         # Prepare DataFrame
         user_df = pd.DataFrame([user_input])
@@ -116,9 +167,9 @@ def predict():
             'success': True,
             'price_2020': float(predicted_price_2020),
             'price_2025': float(predicted_prices['2025']),
-            'predicted_prices': predicted_prices,         # This house predictions 2020-2025
+            'predicted_prices': predicted_prices,
             'cagr': float(cagr),
-            'historical_prices': historical_prices,      # State average historical data
+            'historical_prices': historical_prices,
             'state': state.upper()
         })
 

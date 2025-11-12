@@ -1,5 +1,6 @@
 let mapInstance = null;
 let marker = null;
+let useAddressMode = false;
 
 // Initialize map on page load
 function initializeMap() {
@@ -48,10 +49,60 @@ function updateMap(lat, long, cityName = 'Property') {
   mapInstance.setView([latNum, longNum], 12);
 }
 
+// Geocode address to coordinates using Nominatim API
+async function geocodeAddress(street, city, state, zip) {
+  try {
+    // Build address string
+    let addressStr = '';
+    if (street) addressStr += street + ', ';
+    if (city) addressStr += city + ', ';
+    if (state) addressStr += state + ', ';
+    if (zip) addressStr += zip;
+    
+    addressStr = addressStr.replace(/,\s*$/, '');
+    
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressStr)}&format=json`);
+    const data = await response.json();
+    
+    if (data.length > 0) {
+      return {
+        lat: parseFloat(data[0].lat),
+        long: parseFloat(data[0].lon)
+      };
+    } else {
+      throw new Error('Address not found');
+    }
+  } catch (error) {
+    console.error('Geocoding error:', error);
+    throw error;
+  }
+}
+
+
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
   // Initialize map
   initializeMap();
+
+  // ===============================
+  // TOGGLE LOCATION MODE
+  // ===============================
+  const toggleBtn = document.getElementById('toggle-location-btn');
+  const latLong = document.querySelector('.lat-long');
+  const streetZip = document.querySelector('.street-zip');
+  
+  toggleBtn.addEventListener('click', () => {
+    useAddressMode = !useAddressMode;
+    if (useAddressMode) {
+      latLong.style.display = 'none';
+      streetZip.style.display = 'flex';
+      toggleBtn.textContent = 'Use Coordinates Instead';
+    } else {
+      latLong.style.display = 'flex';
+      streetZip.style.display = 'none';
+      toggleBtn.textContent = 'Use Address Instead';
+    }
+  });
 
   // ===============================
   // AUTO-RESIZE TEXT INPUTS
@@ -132,42 +183,61 @@ document.addEventListener('DOMContentLoaded', async () => {
         has_parking: 1
     };
 
-    // --- Input Values (Read from DOM, use default if empty) ---
-    const sqft = document.getElementById('sqft').value || DEFAULT_VALUES.sqft;
-    const beds = document.getElementById('beds').value || DEFAULT_VALUES.beds;
-    const baths = document.getElementById('baths').value || DEFAULT_VALUES.baths;
-    const type = document.getElementById('type').value || DEFAULT_VALUES.type;
-    const lat = document.getElementById('lat').value || DEFAULT_VALUES.lat;
-    const long = document.getElementById('long').value || DEFAULT_VALUES.long;
-    const state = stateSelect.value || DEFAULT_VALUES.state;
-    const city = citySelect.value || DEFAULT_VALUES.city;
-
-    // Prepare data for API
-    const data = {
-        sqft: sqft,
-        beds: beds,
-        baths: baths,
-        type: type,
-        state: state,
-        city: city,
-        lat: lat,
-        long: long,
-        cats_allowed: document.getElementById('cats_allowed').checked ? 1 : 0,
-        dogs_allowed: document.getElementById('dogs_allowed').checked ? 1 : 0,
-        smoking_allowed: document.getElementById('smoking_allowed').checked ? 1 : 0,
-        wheelchair_access: document.getElementById('wheelchair_access').checked ? 1 : 0,
-        electric_vehicle_charge: document.getElementById('electric_vehicle_charge').checked ? 1 : 0,
-        comes_furnished: document.getElementById('comes_furnished').checked ? 1 : 0,
-        has_laundry: document.getElementById('has_laundry').checked ? 1 : 0,
-        has_parking: document.getElementById('has_parking').checked ? 1 : 0
-    };
-    
-    console.log('Sending data:', data);
-    
     try {
       const searchBtn = document.getElementById('search-btn');
       searchBtn.textContent = 'Loading...';
       searchBtn.disabled = true;
+
+      let lat = document.getElementById('lat').value || DEFAULT_VALUES.lat;
+      let long = document.getElementById('long').value || DEFAULT_VALUES.long;
+      let city = citySelect.value || DEFAULT_VALUES.city;
+
+      // If using address mode, geocode the address
+      if (useAddressMode) {
+        const street = document.getElementById('street').value;
+        const zip = document.getElementById('zip').value;
+        const state = stateSelect.value || DEFAULT_VALUES.state;
+        
+        if (!street && !zip) {
+          alert('Please enter a street address or ZIP code');
+          searchBtn.textContent = 'Search';
+          searchBtn.disabled = false;
+          return;
+        }
+        
+        const coords = await geocodeAddress(street, city, state, zip);
+        lat = coords.lat.toString();
+        long = coords.long.toString();
+      }
+
+      // --- Input Values (Read from DOM, use default if empty) ---
+      const sqft = document.getElementById('sqft').value || DEFAULT_VALUES.sqft;
+      const beds = document.getElementById('beds').value || DEFAULT_VALUES.beds;
+      const baths = document.getElementById('baths').value || DEFAULT_VALUES.baths;
+      const type = document.getElementById('type').value || DEFAULT_VALUES.type;
+      const state = stateSelect.value || DEFAULT_VALUES.state;
+
+      // Prepare data for API
+      const data = {
+          sqft: sqft,
+          beds: beds,
+          baths: baths,
+          type: type,
+          state: state,
+          city: city,
+          lat: lat,
+          long: long,
+          cats_allowed: document.getElementById('cats_allowed').checked ? 1 : 0,
+          dogs_allowed: document.getElementById('dogs_allowed').checked ? 1 : 0,
+          smoking_allowed: document.getElementById('smoking_allowed').checked ? 1 : 0,
+          wheelchair_access: document.getElementById('wheelchair_access').checked ? 1 : 0,
+          electric_vehicle_charge: document.getElementById('electric_vehicle_charge').checked ? 1 : 0,
+          comes_furnished: document.getElementById('comes_furnished').checked ? 1 : 0,
+          has_laundry: document.getElementById('has_laundry').checked ? 1 : 0,
+          has_parking: document.getElementById('has_parking').checked ? 1 : 0
+      };
+      
+      console.log('Sending data:', data);
       
       console.log('Sending request to Flask API...');
       
