@@ -298,7 +298,7 @@ function initializeMap() {
   mapInstance.fitBounds(usBounds);
   mapInstance.setZoom(4);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 6,
+    maxZoom: 18,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(mapInstance);
   marker = null;

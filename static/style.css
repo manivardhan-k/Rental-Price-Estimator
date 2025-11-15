@@ -154,7 +154,8 @@ canvas#waveCanvas {
   display: flex;
   gap: 20px;
   justify-content: space-between;
-  height: 600px;
+  height: 550px;
+  margin-bottom: 20px;
 }
 
 .vertical-divider {
@@ -168,7 +169,7 @@ canvas#waveCanvas {
 #map-container, #chart-container {
   background: #ffffff;
   flex: 1 1 45%;
-  height: 75%;
+  height: 90%;
   padding: 15px;
   border-radius: 50px;
   display: flex;
