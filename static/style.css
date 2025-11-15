@@ -27,7 +27,6 @@ canvas#waveCanvas {
   background: #ffffff;
   padding: 20px;
   border-radius: 125px;
-  box-shadow: 0 2px 8px rgba(79, 0, 116, 0.5);
   margin-bottom: 30px;
   text-align: center;
   display: flex;
@@ -172,7 +171,6 @@ canvas#waveCanvas {
   height: 75%;
   padding: 15px;
   border-radius: 50px;
-  box-shadow: 0 2px 8px rgba(79, 0, 116, 0.5);
   display: flex;
   flex-direction: column;
   box-shadow: 0 0 5px white;
@@ -195,4 +193,30 @@ canvas#waveCanvas {
 #chart {
   width: 100%;
   height: 100%;
+}
+
+/* Footer styles */
+.footer {
+  background-color: #ffffff;
+  color: black;
+  padding: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  border-top: 1px solid #ddd;
+  width: 100%; /* full width */
+  box-sizing: border-box;
+}
+
+.footer a {
+  color: #4d0270; /* theme color */
+  text-decoration: none;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}
+
+.footer .disclaimer {
+  margin-top: 10px;
+  line-height: 1.5;
 }

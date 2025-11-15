@@ -618,43 +618,59 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
         x: '2025', y: histPrices[idx2025],
         text: `$${Math.round(histPrices[idx2025]).toLocaleString()}`,
         showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#4f0074',
-        ax: 40, ay: -40,
+        ax: 30, ay: -30,
         bgcolor: 'rgba(79, 0, 116, 0.1)', bordercolor: '#4f0074', borderwidth: 1, borderpad: 4,
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
   } else if (predYears.length > 0) {
-    const idx2020 = histYears.indexOf('2020');
-    if (idx2020 !== -1) {
+    // 2020 predicted price
+    const idx2020Pred = predYears.indexOf('2020');
+    if (idx2020Pred !== -1) {
       annotations.push({
-        x: '2020', y: histPrices[idx2020],
-        text: `$${Math.round(histPrices[idx2020]).toLocaleString()}`,
+        x: '2020', y: predPrices[idx2020Pred],
+        text: `$${Math.round(predPrices[idx2020Pred]).toLocaleString()}`,
+        showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#ff7f0e',
+        ax: -30, ay: -30,
+        bgcolor: 'rgba(255, 127, 14, 0.1)', bordercolor: '#ff7f0e', borderwidth: 1, borderpad: 4,
+        font: { color: '#ff7f0e', size: 12, family: 'Arial' }
+      });
+    }
+  
+    // 2020 historical price
+    const idx2020Hist = histYears.indexOf('2020');
+    if (idx2020Hist !== -1) {
+      annotations.push({
+        x: '2020', y: histPrices[idx2020Hist],
+        text: `$${Math.round(histPrices[idx2020Hist]).toLocaleString()}`,
         showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#4f0074',
-        ax: -40, ay: -40,
+        ax: -30, ay: -30,
         bgcolor: 'rgba(79, 0, 116, 0.1)', bordercolor: '#4f0074', borderwidth: 1, borderpad: 4,
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
-
+  
+    // 2025 historical price
     const idx2025Hist = histYears.indexOf('2025');
     if (idx2025Hist !== -1) {
       annotations.push({
         x: '2025', y: histPrices[idx2025Hist],
         text: `$${Math.round(histPrices[idx2025Hist]).toLocaleString()}`,
         showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#4f0074',
-        ax: 40, ay: 40,
+        ax: 30, ay: 30,
         bgcolor: 'rgba(79, 0, 116, 0.1)', bordercolor: '#4f0074', borderwidth: 1, borderpad: 4,
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
-
+  
+    // 2025 predicted price
     const idx2025Pred = predYears.indexOf('2025');
     if (idx2025Pred !== -1) {
       annotations.push({
         x: '2025', y: predPrices[idx2025Pred],
         text: `$${Math.round(predPrices[idx2025Pred]).toLocaleString()}`,
         showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#ff7f0e',
-        ax: 40, ay: -40,
+        ax: 30, ay: -30,
         bgcolor: 'rgba(255, 127, 14, 0.1)', bordercolor: '#ff7f0e', borderwidth: 1, borderpad: 4,
         font: { color: '#ff7f0e', size: 12, family: 'Arial' }
       });
