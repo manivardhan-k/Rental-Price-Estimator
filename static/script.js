@@ -317,6 +317,11 @@ function updateMap(lat, long, cityName = 'Property') {
     .bindPopup(`<strong>${cityName}</strong><br>Lat: ${latNum}<br>Long: ${longNum}`)
     .openPopup();
   mapInstance.setView([latNum, longNum], 12);
+
+  // Force map to recalculate its size with a delay
+  setTimeout(() => {
+    if (mapInstance) mapInstance.invalidateSize(true);
+  }, 300);
 }
 
 async function geocodeAddress(street, city, state, zip) {
@@ -349,6 +354,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   initializeMap();
   createHistoricalChart(US_HISTORICAL, {}, "US");
   initFieldValidation();
+
+  function handleMapResize() {
+    if (mapInstance) {
+      // Longer delay to ensure layout has completely settled
+      setTimeout(() => {
+        mapInstance.invalidateSize(true);
+      }, 200);
+    }
+  }
+
+  window.addEventListener('resize', handleMapResize);
 
   // Automatically select all text when a user focuses an input
   document.querySelectorAll('input[type="text"], input[type="number"], input[type="search"]').forEach(input => {
@@ -692,10 +708,10 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
   const config = { responsive: true, displayModeBar: true, displaylogo: false };
 
   Plotly.react('chart', initialData, layout, config).then(() => {
-    const modeBar = document.querySelector('#chart .modebar-container');
-    if (modeBar) {
-      modeBar.style.right = '35px';
-      modeBar.style.top = '361px';
-    }
+    // const modeBar = document.querySelector('#chart .modebar-container');
+    // if (modeBar) {
+    //   modeBar.style.right = '35px';
+    //   modeBar.style.top = '361px';
+    // }
   });
 }

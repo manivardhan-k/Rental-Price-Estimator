@@ -1,5 +1,4 @@
 import random
-import os
 
 # https://www.kaggle.com/datasets/austinreese/usa-housing-listings
 

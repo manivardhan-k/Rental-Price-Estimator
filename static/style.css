@@ -196,6 +196,12 @@ canvas#waveCanvas {
   height: 100%;
 }
 
+#chart .modebar-container {
+  right: 35px !important;
+  top: 370px !important;
+  /* transform: scale(0.85); */
+}
+
 /* Footer styles */
 .footer {
   background-color: #ffffff;
@@ -220,4 +226,298 @@ canvas#waveCanvas {
 .footer .disclaimer {
   margin-top: 10px;
   line-height: 1.5;
+}
+
+
+/* ============================================
+MOBILE RESPONSIVE STYLES
+============================================ */
+
+@media (max-width: 1000px) {
+  #chart .modebar-container {
+    right: 15px !important;
+    transform: scale(0.90);
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    max-width: 100%;
+    margin: 10px auto;
+    padding: 10px;
+  }
+
+  .input-section {
+    padding: 15px;
+    border-radius: 80px;
+    margin-bottom: 20px;
+  }
+
+  .input-section h2 {
+    margin-bottom: 20px;
+    font-size: 1.4em;
+  }
+
+  .inputs {
+    gap: 8px;
+  }
+
+  .inputs input, .inputs select {
+    padding: 8px 10px;
+    min-width: 100px;
+    font-size: 14px;
+  }
+
+  .house-details, .house-location {
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+
+  .state-city, .lat-long, .street-zip {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .house-amenities h3 {
+    margin-top: 8px;
+    margin-bottom: 12px;
+    font-size: 1em;
+  }
+
+  .checkbox-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .checkbox-group label {
+    font-size: 0.9em;
+  }
+
+  #search-btn {
+    margin-top: 12px;
+    padding: 10px 20px;
+    font-size: 0.95em;
+    width: 80%;
+  }
+
+  /* Stack map and chart vertically on mobile */
+  .output-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: auto;
+    margin-bottom: 20px;
+  }
+
+  .vertical-divider {
+    display: none;
+  }
+
+  #chart-container {
+    flex: 1 1 100%;
+    height: 400px;
+    padding: 12px;
+    border-radius: 40px;
+  }
+
+  #chart .modebar-container {
+    right: 0px !important;
+    top: 370px !important;
+    transform: scale(0.85);
+  }
+
+  #map-container h3, #chart-container h3 {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 1em;
+  }
+
+  #map-container {
+    flex: 1 1 100%;
+    height: 400px;
+    padding: 12px;
+    border-radius: 40px;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    border-radius: 30px;
+  }
+
+  .footer {
+    padding: 15px;
+    font-size: 0.85rem;
+  }
+
+  .footer .disclaimer {
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 647px) {
+  .inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .inputs input, .inputs select {
+    padding: 8px 10px;
+    font-size: 13px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .house-details, .house-location {
+    display: flex;
+    flex-wrap: wrap;
+    /* flex-direction: column; */
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .house-details label, .house-location label {
+    /* width: 100%; */
+    text-align: center;
+  }
+
+  .state-city, .lat-long, .street-zip {
+    gap: 15px;
+  }
+
+  .state-city label, .lat-long label, .street-zip label {
+    width: 100%;
+    text-align: center;
+  }
+
+  .state-city select, .lat-long input, .street-zip input {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 8px;
+  }
+
+  .input-section {
+    padding: 12px;
+    border-radius: 60px;
+    margin-bottom: 15px;
+  }
+
+  .input-section h2 {
+    margin-bottom: 15px;
+    font-size: 1.2em;
+  }
+
+  .inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .inputs input, .inputs select {
+    padding: 8px 10px;
+    font-size: 13px;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .house-details, .house-location {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .house-details label, .house-location label {
+    width: 100%;
+    text-align: center;
+  }
+
+  .state-city, .lat-long, .street-zip {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .state-city label, .lat-long label, .street-zip label {
+    width: 100%;
+    text-align: center;
+  }
+
+  .state-city select, .lat-long input, .street-zip input {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .checkbox-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .checkbox-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  #search-btn {
+    width: 80%;
+    max-width: 280px;
+    padding: 12px 20px;
+    font-size: 0.95em;
+    margin-top: 20px;
+  }
+
+  .output-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  #map-container, #chart-container {
+    height: 350px;
+    padding: 10px;
+    border-radius: 30px;
+  }
+
+  #chart .modebar-container {
+    justify-content: flex-end;
+    right: 0px !important;
+    transform: scale(0.75);
+  }
+
+  #map-container h3, #chart-container h3 {
+    font-size: 0.95em;
+  }
+
+  .footer {
+    padding: 12px;
+    font-size: 0.8rem;
+  }
 }
