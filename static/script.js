@@ -1,6 +1,7 @@
 let mapInstance = null;
 let marker = null;
 let useAddressMode = false;
+let errorTimeoutId = null;
 
 // DEFAULT US HISTORICAL PRICES
 const US_HISTORICAL = {
@@ -18,129 +19,320 @@ const US_HISTORICAL = {
 };
 
 const STATE_NAMES = {
-  "AL": "Alabama",
-  "AK": "Alaska",
-  "AZ": "Arizona",
-  "AR": "Arkansas",
-  "CA": "California",
-  "CO": "Colorado",
-  "CT": "Connecticut",
-  "DE": "Delaware",
-  "FL": "Florida",
-  "GA": "Georgia",
-  "HI": "Hawaii",
-  "ID": "Idaho",
-  "IL": "Illinois",
-  "IN": "Indiana",
-  "IA": "Iowa",
-  "KS": "Kansas",
-  "KY": "Kentucky",
-  "LA": "Louisiana",
-  "ME": "Maine",
-  "MD": "Maryland",
-  "MA": "Massachusetts",
-  "MI": "Michigan",
-  "MN": "Minnesota",
-  "MS": "Mississippi",
-  "MO": "Missouri",
-  "MT": "Montana",
-  "NE": "Nebraska",
-  "NV": "Nevada",
-  "NH": "New Hampshire",
-  "NJ": "New Jersey",
-  "NM": "New Mexico",
-  "NY": "New York",
-  "NC": "North Carolina",
-  "ND": "North Dakota",
-  "OH": "Ohio",
-  "OK": "Oklahoma",
-  "OR": "Oregon",
-  "PA": "Pennsylvania",
-  "RI": "Rhode Island",
-  "SC": "South Carolina",
-  "SD": "South Dakota",
-  "TN": "Tennessee",
-  "TX": "Texas",
-  "UT": "Utah",
-  "VT": "Vermont",
-  "VA": "Virginia",
-  "WA": "Washington",
-  "WV": "West Virginia",
-  "WI": "Wisconsin",
-  "WY": "Wyoming"
+  "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
+  "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia",
+  "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
+  "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
+  "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri",
+  "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey",
+  "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio",
+  "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
+  "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont",
+  "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"
 };
 
+// ===============================
+// FIELD VALIDATION SYSTEM
+// ===============================
+const REQUIRED_FIELDS = {
+  sqft: { selector: '#sqft', label: 'Square Footage', validate: (val) => !isNaN(val) && parseFloat(val) > 0 },
+  beds: { selector: '#beds', label: 'Bedrooms', validate: (val) => !isNaN(val) && parseFloat(val) > 0 },
+  baths: { selector: '#baths', label: 'Bathrooms', validate: (val) => !isNaN(val) && parseFloat(val) > 0 },
+  type: { selector: '#type', label: 'House Type', validate: (val) => val.trim() !== '' },
+  state: { selector: '#state', label: 'State', validate: (val) => val.trim() !== '' },
+  city: { selector: '#city', label: 'City', validate: (val) => val.trim() !== '' },
+  lat: { selector: '#lat', label: 'Latitude', validate: (val) => !isNaN(val) && val.trim() !== '' && parseFloat(val) >= -90 && parseFloat(val) <= 90 },
+  long: { selector: '#long', label: 'Longitude', validate: (val) => !isNaN(val) && val.trim() !== '' && parseFloat(val) >= -180 && parseFloat(val) <= 180 },
+  street: { selector: '#street', label: 'Street', validate: (val) => val.trim() !== '' },
+  zip: { selector: '#zip', label: 'ZIP', validate: (val) => val.trim() !== '' }
+};
 
-// Initialize map on page load
+function initValidationStyles() {
+  const style = document.createElement('style');
+  style.textContent = `
+    .field-error {
+      border: 2px solid #dc2626 !important;
+    }
+    .field-error::placeholder {
+      color: #991b1b;
+    }
+    .field-error option:invalid {
+      color: #991b1b;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+initValidationStyles();
+
+function clearFieldError(fieldKey) {
+  const field = document.querySelector(REQUIRED_FIELDS[fieldKey].selector);
+  if (field) field.classList.remove('field-error');
+}
+
+function markFieldError(fieldKey) {
+  const field = document.querySelector(REQUIRED_FIELDS[fieldKey].selector);
+  if (field) field.classList.add('field-error');
+}
+
+function isFieldValid(fieldKey) {
+  const field = document.querySelector(REQUIRED_FIELDS[fieldKey].selector);
+  if (!field) return false;
+  const value = field.value.trim();
+  if (value === '' || value === null) return false;
+  if (REQUIRED_FIELDS[fieldKey].validate) {
+    return REQUIRED_FIELDS[fieldKey].validate(value);
+  }
+  return true;
+}
+
+function getActiveLocationMode() {
+  const streetZipElement = document.querySelector('.street-zip');
+  if (streetZipElement && streetZipElement.style.display !== 'none') {
+    return 'address';
+  }
+  return 'coords';
+}
+
+function initFieldValidation() {
+  Object.keys(REQUIRED_FIELDS).forEach(fieldKey => {
+    const field = document.querySelector(REQUIRED_FIELDS[fieldKey].selector);
+    if (field) {
+      field.addEventListener('input', () => {
+        if (isFieldValid(fieldKey)) clearFieldError(fieldKey);
+      });
+      field.addEventListener('change', () => {
+        if (isFieldValid(fieldKey)) clearFieldError(fieldKey);
+      });
+      field.addEventListener('blur', () => {
+        if (field.value.trim() !== '' && !isFieldValid(fieldKey)) {
+          markFieldError(fieldKey);
+        }
+      });
+    }
+  });
+}
+
+function validateRequiredFieldsForMode() {
+  const mode = getActiveLocationMode();
+  const alwaysRequired = ['sqft', 'beds', 'baths', 'type', 'state', 'city'];
+  const locationFields = mode === 'coords' ? ['lat', 'long'] : ['street', 'zip'];
+
+  const allRequired = [...alwaysRequired, ...locationFields];
+
+  const emptyFields = [];
+  const invalidFields = [];
+
+  // ----- Step 1: Collect empty fields -----
+  allRequired.forEach(fieldKey => {
+    const field = document.querySelector(REQUIRED_FIELDS[fieldKey].selector);
+    if (!field) return;
+
+    if (field.value.trim() === '') {
+      markFieldError(fieldKey);
+      emptyFields.push(REQUIRED_FIELDS[fieldKey].label);
+    } else {
+      clearFieldError(fieldKey);
+    }
+  });
+
+  // If there are empty fields, show all of them
+  if (emptyFields.length > 0) {
+    return { hasErrors: true, message: `Please fill in: ${emptyFields.join(', ')}` };
+  }
+
+  // ----- Step 2: Collect invalid fields -----
+  allRequired.forEach(fieldKey => {
+    const field = document.querySelector(REQUIRED_FIELDS[fieldKey].selector);
+    if (!field) return;
+
+    const value = field.value.trim();
+    if (REQUIRED_FIELDS[fieldKey].validate && !REQUIRED_FIELDS[fieldKey].validate(value)) {
+      markFieldError(fieldKey);
+
+      // Generate field-specific message
+      let typeMsg = '';
+      switch (fieldKey) {
+        case 'sqft':
+        case 'beds':
+        case 'baths':
+          typeMsg = 'must be a positive number.';
+          break;
+        case 'lat':
+          typeMsg = 'must be a number between -90 and 90.';
+          break;
+        case 'long':
+          typeMsg = 'must be a number between -180 and 180.';
+          break;
+        case 'zip':
+          typeMsg = 'must be a valid ZIP code.';
+          break;
+        case 'type':
+        case 'state':
+        case 'city':
+        case 'street':
+          typeMsg = 'cannot be empty.';
+          break;
+        default:
+          typeMsg = 'is invalid.';
+      }
+
+      invalidFields.push({ label: REQUIRED_FIELDS[fieldKey].label, message: typeMsg });
+    } else {
+      clearFieldError(fieldKey);
+    }
+  });
+
+  // If there are invalid fields, show the first one
+  if (invalidFields.length > 0) {
+    const first = invalidFields[0];
+    return { hasErrors: true, message: `${first.label} ${first.message}` };
+  }
+
+  // All fields valid
+  return { hasErrors: false, message: '' };
+}
+
+
+// ===============================
+// ERROR NOTIFICATION SYSTEM
+// ===============================
+function initErrorContainer() {
+  if (!document.getElementById('error-container')) {
+    const container = document.createElement('div');
+    container.id = 'error-container';
+    container.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      max-width: 400px;
+      font-family: Arial, sans-serif;
+    `;
+    document.body.appendChild(container);
+  }
+}
+
+// Show error
+function showError(message, duration = 5000) {
+  initErrorContainer();
+  const container = document.getElementById('error-container');
+
+  // Remove existing error first
+  clearError();
+
+  const errorBox = document.createElement('div');
+  errorBox.className = 'error-message';
+  errorBox.innerHTML = `
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <span style="font-size: 20px; color: #dc2626; top: 5px;">⚠</span>
+      <div>
+        <strong style="color: #991b1b; display: block; font-size: 0.9rem;">Error</strong>
+        <p style="margin: 5px 0 0 0; color: #7f1d1d; font-size: 13px;">${message}</p>
+      </div>
+      <button class="error-close" style="background: none; border: none; color: #dc2626; cursor: pointer; font-size: 18px; padding: 0; line-height: 1;">×</button>
+    </div>
+  `;
+  errorBox.style.cssText = `
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+  `;
+
+  container.appendChild(errorBox);
+
+  // Close handler
+  const closeHandler = () => {
+    errorBox.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => errorBox.remove(), 300);
+  };
+
+  // Auto remove after duration
+  const timeoutId = setTimeout(() => {
+    if (errorBox.parentNode) closeHandler();
+  }, duration);
+
+  // Close button
+  errorBox.querySelector('.error-close').addEventListener('click', () => {
+    clearTimeout(timeoutId);
+    closeHandler();
+  });
+}
+
+// Clear current error immediately
+function clearError() {
+  const container = document.getElementById('error-container');
+  if (!container) return;
+
+  const existingError = container.querySelector('.error-message');
+  if (existingError) {
+    existingError.remove();
+  }
+}
+
+// Animation styles
+const animStyle = document.createElement('style');
+animStyle.textContent = `
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(400px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(400px); }
+  }
+`;
+document.head.appendChild(animStyle);
+
+
+// ===============================
+// MAP FUNCTIONS
+// ===============================
 function initializeMap() {
-  // USA bounding box
-  const usBounds = [
-    [24.396308, -124.848974],  // Southwest
-    [49.384358, -66.885444]    // Northeast
-  ];
-
+  const usBounds = [[24.396308, -124.848974], [49.384358, -66.885444]];
   mapInstance = L.map('map');
-  
-  mapInstance.fitBounds(usBounds); // Show whole US
-
-  // Sets the zoom level to 4
+  mapInstance.fitBounds(usBounds);
   mapInstance.setZoom(4);
-
-  // Add OpenStreetMap tiles
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 6,
     attribution: '&copy; OpenStreetMap contributors'
   }).addTo(mapInstance);
-
-  // Do NOT add a default marker
   marker = null;
 }
 
-
-// Update map with new coordinates
 function updateMap(lat, long, cityName = 'Property') {
   if (!mapInstance) initializeMap();
-
   const latNum = parseFloat(lat);
   const longNum = parseFloat(long);
-
   if (isNaN(latNum) || isNaN(longNum)) {
     console.error('Invalid coordinates');
     return;
   }
-
-  // Remove old marker if exists
   if (marker) mapInstance.removeLayer(marker);
-
-  // Add new marker
   marker = L.marker([latNum, longNum]).addTo(mapInstance)
     .bindPopup(`<strong>${cityName}</strong><br>Lat: ${latNum}<br>Long: ${longNum}`)
     .openPopup();
-
-  // Center map on result
   mapInstance.setView([latNum, longNum], 12);
 }
 
-// Geocode address to coordinates using Nominatim API
 async function geocodeAddress(street, city, state, zip) {
   try {
-    // Build address string
     let addressStr = '';
     if (street) addressStr += street + ', ';
     if (city) addressStr += city + ', ';
     if (state) addressStr += state + ', ';
     if (zip) addressStr += zip;
-    
     addressStr = addressStr.replace(/,\s*$/, '');
     
     const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressStr)}&format=json`);
     const data = await response.json();
     
     if (data.length > 0) {
-      return {
-        lat: parseFloat(data[0].lat),
-        long: parseFloat(data[0].lon)
-      };
+      return { lat: parseFloat(data[0].lat), long: parseFloat(data[0].lon) };
     } else {
       throw new Error('Address not found');
     }
@@ -150,21 +342,29 @@ async function geocodeAddress(street, city, state, zip) {
   }
 }
 
-
-// Initialize when DOM is ready
+// ===============================
+// MAIN INITIALIZATION
+// ===============================
 document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize map
   initializeMap();
-
-  // Show default US chart on page load
   createHistoricalChart(US_HISTORICAL, {}, "US");
+  initFieldValidation();
 
-  // ===============================
+  // Automatically select all text when a user focuses an input
+  document.querySelectorAll('input[type="text"], input[type="number"], input[type="search"]').forEach(input => {
+    input.addEventListener('focus', (e) => {
+      e.target.select();
+    });
+  });
+
   // TOGGLE LOCATION MODE
-  // ===============================
   const toggleBtn = document.getElementById('toggle-location-btn');
   const latLong = document.querySelector('.lat-long');
   const streetZip = document.querySelector('.street-zip');
+  
+  // Initialize display state
+  latLong.style.display = 'flex';
+  streetZip.style.display = 'none';
   
   toggleBtn.addEventListener('click', () => {
     useAddressMode = !useAddressMode;
@@ -179,24 +379,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  // ===============================
   // AUTO-RESIZE TEXT INPUTS
-  // ===============================
   const inputs = document.querySelectorAll(".input-group input[type='text']");
   inputs.forEach(input => {
     const placeholderLength = input.placeholder.length;
     input.style.width = `${placeholderLength - 1}ch`; 
   });
 
-  // ===============================
   // STATE AND CITY DROPDOWNS
-  // ===============================
   const stateSelect = document.getElementById('state');
   const citySelect = document.getElementById('city');
-  
   let citiesByState = {};
   
-  // Load cities from JSON file (organized by state)
   try {
     const response = await fetch('us-cities.json');
     if (!response.ok) throw new Error("City data load failed");
@@ -206,86 +400,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     citySelect.disabled = true;
   }
   
-  // Add search/filter functionality to state select
   makeSelectSearchable(stateSelect);
-  
-  // Add search/filter functionality to city select
   makeSelectSearchable(citySelect);
   
-  // When state changes, update city dropdown
   stateSelect.addEventListener("change", () => {
     const stateAbbr = stateSelect.value;
     const cityList = citiesByState[stateAbbr] || [];
-
-    // Reset city dropdown
-    citySelect.innerHTML = `
-      <option value="" disabled selected hidden>Select City</option>
-    `;
-
-    // Populate with cities
+    citySelect.innerHTML = `<option value="" disabled selected hidden>Select City</option>`;
     cityList.forEach(city => {
       const opt = document.createElement("option");
       opt.value = city;
       opt.textContent = city;
       citySelect.appendChild(opt);
     });
-
-    // Optionally enable the city select if it was disabled
     citySelect.disabled = cityList.length === 0;
   });
   
-  // ===============================
   // SEARCH BUTTON HANDLER
-  // ===============================
   document.getElementById('search-btn').addEventListener('click', async () => {
     try {
+
+      clearError();
+
       const searchBtn = document.getElementById('search-btn');
+      const validation = validateRequiredFieldsForMode();
+      
+      if (validation.hasErrors) {
+        showError(validation.message);
+        return;
+      }
+      
       searchBtn.textContent = 'Loading...';
       searchBtn.disabled = true;
-  
-      // --- Gather inputs ---
+
       let lat = document.getElementById('lat').value.trim();
       let long = document.getElementById('long').value.trim();
       const street = document.getElementById('street').value.trim();
       const zip = document.getElementById('zip').value.trim();
-      const state = stateSelect.value.trim();
-      const city = citySelect.value.trim();
+      const state = document.getElementById('state').value.trim();
+      const city = document.getElementById('city').value.trim();
       const sqft = document.getElementById('sqft').value.trim();
       const beds = document.getElementById('beds').value.trim();
       const baths = document.getElementById('baths').value.trim();
       const type = document.getElementById('type').value.trim();
-  
-      // --- Check mandatory fields ---
-      if (!sqft || !beds || !baths || !type || !state || !city) {
-        alert('Please enter all required fields: Square footage, Beds, Baths, Type, State, City');
-        return;
-      }
-  
-      if (useAddressMode) {
-        if (!street && !zip) {
-          alert('Please enter a street address and ZIP code');
+
+      const useAddressModeFlag = document.querySelector('.street-zip').style.display !== 'none';
+
+      if (useAddressModeFlag) {
+        try {
+          const coords = await geocodeAddress(street, city, state, zip);
+          lat = coords.lat.toString();
+          long = coords.long.toString();
+        } catch (error) {
+          showError('Address not found. Double-check the street and ZIP code, or use latitude/longitude instead.');
           return;
         }
-        const coords = await geocodeAddress(street, city, state, zip);
-        lat = coords.lat.toString();
-        long = coords.long.toString();
       }
-  
-      if (!lat || !long) {
-        alert("Coordinates could not be determined. Please enter an address or lat/long.");
-        return;
-      }
-  
-      // Prepare data for API
+
       const data = {
-        sqft: sqft,
-        beds: beds,
-        baths: baths,
-        type: type,
-        state: state,
-        city: city,
-        lat: lat,
-        long: long,
+        sqft, beds, baths, type, state, city, lat, long,
         cats_allowed: document.getElementById('cats_allowed').checked ? 1 : 0,
         dogs_allowed: document.getElementById('dogs_allowed').checked ? 1 : 0,
         smoking_allowed: document.getElementById('smoking_allowed').checked ? 1 : 0,
@@ -295,56 +468,81 @@ document.addEventListener('DOMContentLoaded', async () => {
         has_laundry: document.getElementById('has_laundry').checked ? 1 : 0,
         has_parking: document.getElementById('has_parking').checked ? 1 : 0
       };
-  
-      // --- Call Flask API ---
+
       const response = await fetch('http://127.0.0.1:5000/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
         mode: 'cors'
       });
-  
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Server error: ${response.status} - ${errorText}`);
       }
-  
+
       const result = await response.json();
-  
+
       if (result.success) {
         createHistoricalChart(result.historical_prices, result.predicted_prices, result.state);
         updateMap(lat, long, city);
       } else {
-        alert('Error: ' + result.error);
+        showError('Error: ' + result.error);
       }
-  
+
     } catch (error) {
       console.error('Error:', error);
-      alert(error.message);
+      showError(error.message);
     } finally {
       const searchBtn = document.getElementById('search-btn');
       searchBtn.textContent = 'Search';
       searchBtn.disabled = false;
     }
   });
-  
 });
 
 // ===============================
-// CREATE ANIMATED HISTORICAL + PREDICTION CHART
+// HELPER: MAKE SELECT SEARCHABLE
+// ===============================
+function makeSelectSearchable(selectElement) {
+  const options = Array.from(selectElement.options);
+  let searchText = '';
+  let searchTimeout;
+  
+  selectElement.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchText = '';
+      return;
+    }
+    if (e.key.length === 1) {
+      e.preventDefault();
+      searchText += e.key.toLowerCase();
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => { searchText = ''; }, 1000);
+      
+      const matchingOption = options.find(option => 
+        option.textContent.toLowerCase().startsWith(searchText)
+      );
+      if (matchingOption) {
+        selectElement.value = matchingOption.value;
+        selectElement.dispatchEvent(new Event('change'));
+      }
+    }
+  });
+}
+
+// ===============================
+// CREATE ANIMATED CHART
 // ===============================
 function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "US") {
-  // --- Sort historical prices ---
   const sortedHist = Object.entries(historicalPrices).sort(([a], [b]) => a.localeCompare(b));
   const histYears = sortedHist.map(([year]) => year);
   const histPrices = sortedHist.map(([, price]) => price);
 
-  // --- Sort predicted prices ---
   const sortedPred = Object.entries(predictedPrices).sort(([a], [b]) => a.localeCompare(b));
   const predYears = sortedPred.map(([year]) => year);
   const predPrices = sortedPred.map(([, price]) => price);
 
-  // --- Dynamic axis ranges ---
   const allPrices = histPrices.concat(predPrices);
   const minPrice = Math.min(...allPrices);
   const maxPrice = Math.max(...allPrices);
@@ -358,16 +556,14 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
   const xPadding = 0.75;
   const xAxisRange = [minYear - xPadding, maxYear + xPadding];
 
-  // --- Prepare frames ---
+  const stateLabel = state === "US" ? "US Average" : `${STATE_NAMES[state] || state} Average`;
+
   const frames = [];
   const maxLength = Math.max(histYears.length, predYears.length);
-
-  const stateLabel = state === "US" ? "US Average" : `${STATE_NAMES[state] || state}\nAverage`;
 
   for (let i = 1; i <= maxLength; i++) {
     const currentHistYears = histYears.slice(0, i);
     const currentHistPrices = histPrices.slice(0, i);
-
     const currentPredYears = predYears.slice(0, i);
     const currentPredPrices = predPrices.slice(0, i);
 
@@ -394,7 +590,6 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
     });
   }
 
-  // --- Initial Data (first points) ---
   const initialData = [
     {
       x: histYears,
@@ -414,102 +609,58 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
     }
   ];
 
-  // --- Add text annotations for key points ---
   const annotations = [];
 
-  // For US default chart (only historical data, no predicted)
   if (predYears.length === 0 && histYears.length > 0) {
-    // Mark the 2025 price on historical data
     const idx2025 = histYears.indexOf('2025');
     if (idx2025 !== -1) {
       annotations.push({
-        x: '2025',
-        y: histPrices[idx2025],
+        x: '2025', y: histPrices[idx2025],
         text: `$${Math.round(histPrices[idx2025]).toLocaleString()}`,
-        showarrow: true,
-        arrowhead: 2,
-        arrowsize: 1,
-        arrowwidth: 2,
-        arrowcolor: '#4f0074',
-        ax: 40,
-        ay: -40,
-        bgcolor: 'rgba(79, 0, 116, 0.1)',
-        bordercolor: '#4f0074',
-        borderwidth: 1,
-        borderpad: 4,
+        showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#4f0074',
+        ax: 40, ay: -40,
+        bgcolor: 'rgba(79, 0, 116, 0.1)', bordercolor: '#4f0074', borderwidth: 1, borderpad: 4,
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
   } else if (predYears.length > 0) {
-    // For state data with predictions
-    // Mark 2020 on historical data
     const idx2020 = histYears.indexOf('2020');
     if (idx2020 !== -1) {
       annotations.push({
-        x: '2020',
-        y: histPrices[idx2020],
+        x: '2020', y: histPrices[idx2020],
         text: `$${Math.round(histPrices[idx2020]).toLocaleString()}`,
-        showarrow: true,
-        arrowhead: 2,
-        arrowsize: 1,
-        arrowwidth: 2,
-        arrowcolor: '#4f0074',
-        ax: -40,
-        ay: -40,
-        bgcolor: 'rgba(79, 0, 116, 0.1)',
-        bordercolor: '#4f0074',
-        borderwidth: 1,
-        borderpad: 4,
+        showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#4f0074',
+        ax: -40, ay: -40,
+        bgcolor: 'rgba(79, 0, 116, 0.1)', bordercolor: '#4f0074', borderwidth: 1, borderpad: 4,
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
 
-    // Mark 2025 on historical data
     const idx2025Hist = histYears.indexOf('2025');
     if (idx2025Hist !== -1) {
       annotations.push({
-        x: '2025',
-        y: histPrices[idx2025Hist],
+        x: '2025', y: histPrices[idx2025Hist],
         text: `$${Math.round(histPrices[idx2025Hist]).toLocaleString()}`,
-        showarrow: true,
-        arrowhead: 2,
-        arrowsize: 1,
-        arrowwidth: 2,
-        arrowcolor: '#4f0074',
-        ax: 40,
-        ay: 40,
-        bgcolor: 'rgba(79, 0, 116, 0.1)',
-        bordercolor: '#4f0074',
-        borderwidth: 1,
-        borderpad: 4,
+        showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#4f0074',
+        ax: 40, ay: 40,
+        bgcolor: 'rgba(79, 0, 116, 0.1)', bordercolor: '#4f0074', borderwidth: 1, borderpad: 4,
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
 
-    // Mark 2025 on predicted data
     const idx2025Pred = predYears.indexOf('2025');
     if (idx2025Pred !== -1) {
       annotations.push({
-        x: '2025',
-        y: predPrices[idx2025Pred],
+        x: '2025', y: predPrices[idx2025Pred],
         text: `$${Math.round(predPrices[idx2025Pred]).toLocaleString()}`,
-        showarrow: true,
-        arrowhead: 2,
-        arrowsize: 1,
-        arrowwidth: 2,
-        arrowcolor: '#ff7f0e',
-        ax: 40,
-        ay: -40,
-        bgcolor: 'rgba(255, 127, 14, 0.1)',
-        bordercolor: '#ff7f0e',
-        borderwidth: 1,
-        borderpad: 4,
+        showarrow: true, arrowhead: 2, arrowsize: 1, arrowwidth: 2, arrowcolor: '#ff7f0e',
+        ax: 40, ay: -40,
+        bgcolor: 'rgba(255, 127, 14, 0.1)', bordercolor: '#ff7f0e', borderwidth: 1, borderpad: 4,
         font: { color: '#ff7f0e', size: 12, family: 'Arial' }
       });
     }
   }
 
-  // --- Layout ---
   const layout = {
     title: { text: `Housing Price Trend in ${state} (${histYears[0]}–${histYears[histYears.length - 1]})`, font: { size: 18, color: '#4f0074' }},
     xaxis: { title: 'Year', tickmode: 'linear', dtick: 1, range: xAxisRange },
@@ -518,67 +669,17 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
     plot_bgcolor: '#f9f9f9',
     paper_bgcolor: 'white',
     margin: { t: 35, b: 60, l: 80, r: 40 },
-    legend: {
-      orientation: "h",
-      x: 0,
-      y: .92,
-      xanchor: "left",
-      yanchor: "bottom"
-    },
+    legend: { orientation: "h", x: 0, y: .92, xanchor: "left", yanchor: "bottom" },
     annotations: annotations
   };
 
   const config = { responsive: true, displayModeBar: true, displaylogo: false };
 
-  // --- Draw chart ---
   Plotly.react('chart', initialData, layout, config).then(() => {
-    // Move modebar
     const modeBar = document.querySelector('#chart .modebar-container');
     if (modeBar) {
       modeBar.style.right = '35px';
       modeBar.style.top = '361px';
-    }
-  });
-}
-
-// ===============================
-// HELPER: MAKE SELECT SEARCHABLE
-// ===============================
-function makeSelectSearchable(selectElement) {
-  const options = Array.from(selectElement.options);
-  let searchText = '';
-  let searchTimeout;
-  
-  selectElement.addEventListener('keydown', (e) => {
-    // Clear on Escape
-    if (e.key === 'Escape') {
-      searchText = '';
-      return;
-    }
-    
-    // Only process letter/number keys
-    if (e.key.length === 1) {
-      e.preventDefault();
-      
-      // Add to search text
-      searchText += e.key.toLowerCase();
-      
-      // Clear search text after 1 second of no typing
-      clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(() => {
-        searchText = '';
-      }, 1000);
-      
-      // Find matching option
-      const matchingOption = options.find(option => 
-        option.textContent.toLowerCase().startsWith(searchText)
-      );
-      
-      if (matchingOption) {
-        selectElement.value = matchingOption.value;
-        // Trigger change event
-        selectElement.dispatchEvent(new Event('change'));
-      }
     }
   });
 }
