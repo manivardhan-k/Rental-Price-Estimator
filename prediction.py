@@ -23,37 +23,37 @@ float_cols = ['baths', 'lat', 'long']
 bool_cols = ['cats_allowed', 'dogs_allowed', 'smoking_allowed', 'wheelchair_access',
              'electric_vehicle_charge', 'comes_furnished', 'has_laundry', 'has_parking']
 
-# user_input = {}
-# print("Please enter the property details:")
-# for feature in features:
-#     x = input(f"{feature}: ").strip()
-#     if feature in int_cols:
-#         x = int(x)
-#     elif feature in float_cols:
-#         x = float(x)
-#     elif feature in bool_cols:
-#         x = 0 if x.lower() in ['none', '0', 'false', 'no'] else 1
-#     user_input[feature] = x
+user_input = {}
+print("Please enter the property details:")
+for feature in features:
+    x = input(f"{feature}: ").strip()
+    if feature in int_cols:
+        x = int(x)
+    elif feature in float_cols:
+        x = float(x)
+    elif feature in bool_cols:
+        x = 0 if x.lower() in ['none', '0', 'false', 'no'] else 1
+    user_input[feature] = x
 
-# Sample user input
-user_input = {
-    'region': 'flint',
-    'type': 'apartment',
-    'sqfeet': 700,
-    'beds': 1,
-    'baths': 1.0,
-    'cats_allowed': 1,
-    'dogs_allowed': 1,
-    'smoking_allowed': 1,
-    'wheelchair_access': 0,
-    'comes_furnished': 0,
-    'electric_vehicle_charge': 0,
-    'has_laundry': 1,
-    'has_parking': 1,
-    'lat': 42.9435,
-    'long': -83.6072,
-    'state': 'mi'
-}
+# Sample user inputs
+# user_input = {
+#     'region': 'flint',
+#     'type': 'apartment',
+#     'sqfeet': 700,
+#     'beds': 1,
+#     'baths': 1.0,
+#     'cats_allowed': 1,
+#     'dogs_allowed': 1,
+#     'smoking_allowed': 1,
+#     'wheelchair_access': 0,
+#     'comes_furnished': 0,
+#     'electric_vehicle_charge': 0,
+#     'has_laundry': 1,
+#     'has_parking': 1,
+#     'lat': 42.9435,
+#     'long': -83.6072,
+#     'state': 'mi'
+# }
 
 '''
 boston,

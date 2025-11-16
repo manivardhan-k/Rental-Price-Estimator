@@ -34,6 +34,7 @@ df = pd.read_csv("csvs/housing_sample2k.csv") #Sample dataset 1
 # sns.stripplot(x=df['price'])
 # plt.show()
 
+
 # ===============================
 # ENHANCED DATA PREPROCESSING
 # ===============================
@@ -80,43 +81,10 @@ df['type'] = df['type'].fillna('Other')
 df['laundry_options'] = df['laundry_options'].fillna('none')
 df['parking_options'] = df['parking_options'].fillna('none')
 
-# ===============================
-# ADDING HISTORIC DATA
-# ===============================
-
-# Load the historical data
-# historic_df = pd.read_csv("csvs/state_historic.csv")
-
-# Normalize state codes to lowercase for consistency
-# historic_df['state'] = historic_df['state'].str.strip().str.lower()
-# df['state'] = df['state'].str.strip().str.lower()
-
-# Identify numeric/price columns (assuming they are year columns)
-# price_cols = [col for col in historic_df.columns if col.isdigit()]
-
-# Compute engineered features
-# historic_df['price_2025'] = historic_df['2025']
-# historic_df['price_growth_5y'] = (historic_df['2025'] - historic_df['2020']) / historic_df['2020']
-# historic_df['avg_annual_growth'] = ((historic_df['2025'] / historic_df['2020']) ** (1/5)) - 1
-# historic_df['volatility'] = historic_df[price_cols].std(axis=1)
-# historic_df['recent_trend'] = (historic_df['2025'] - historic_df['2024']) / historic_df['2024']
-
-# Keep only relevant columns
-# historic_features = historic_df[['state', 'price_2025']] #'price_growth_5y', 'avg_annual_growth', 
-                                # 'volatility', 'recent_trend']]
-
-# Merge into your main df
-# df = df.merge(historic_features, how='left', on='state')
-
-# df['price_2025'] = df['price_2025'] * 0.8 + np.random.normal(0, df['price_2025'].std() * 0.05)
-
-# print("------------\n",df.head())
-
 
 # ===============================
 # ADVANCED FEATURE ENGINEERING
 # ===============================
-
 # Laundry and parking features
 df['has_laundry'] = (df['laundry_options'] != 'none').astype(int)
 df['has_parking'] = (df['parking_options'] != 'none').astype(int)
@@ -152,8 +120,9 @@ print(f"Features: {[col for col in df.columns if col != 'price']}")
 df = df.dropna()
 # print(df.head())
 
+
 # ===============================
-# MODEL TRAINING WITH MULTIPLE ALGORITHMS
+# MODEL TRAINING
 # ===============================
 
 # Prepare data
@@ -168,7 +137,6 @@ y_binned = pd.qcut(df['price'], q=10, labels=False, duplicates="drop")
 
 # plt.tight_layout()
 # plt.show()
-
 
 # # Split data
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=33, stratify=y_binned) #Sample dataset 2
@@ -218,7 +186,6 @@ import time
 
 start = time.time()
 
-# 4. Random Forest
 print("\nOptimizing Random Forest...")
 
 # Random Forest hyperparameter grid
@@ -256,6 +223,7 @@ models_results.append(
 end = time.time()
 
 print(f"Training took {(end - start)/60:.2f} minutes")
+
 
 # ===============================
 # RESULTS SUMMARY
@@ -299,39 +267,22 @@ if hasattr(best_single_model, 'feature_importances_'):
     # plt.tight_layout()
     # plt.show()
 
+
 # ===============================
 # MODEL PERSISTENCE
 # ===============================
 # print("\nSaving the best model...")
 
 # Save the model
-# # # # # # # # never run this # # # joblib.dump(best_model['model'], 'pkls/random_forest_model.pkl')
+# never run this # # # joblib.dump(best_model['model'], 'pkls/random_forest_model.pkl')
 # joblib.dump(encoder, 'pkls/target_encoder.pkl')
 # joblib.dump(label_encoders, 'pkls/label_encoders.pkl')
 # joblib.dump(scaler, 'pkls/scaler.pkl')
 
-# # Load the model later
-# rf_loaded = joblib.load('pkls/random_forest_model.pkl')
 
-# # Make predictions with the loaded model
-# y_pred = rf_loaded.predict(X_test_scaled)
-
-# # Convert from log space to original price scale
-# y_te_orig = np.expm1(y_test)
-# preds_orig = np.expm1(y_pred)
-
-# # Compute metrics in original scale
-# rmse = np.sqrt(mean_squared_error(y_te_orig, preds_orig))
-# mae = mean_absolute_error(y_te_orig, preds_orig)
-# r2 = r2_score(y_te_orig, preds_orig)
-
-# print(f"RMSE: ${rmse:,.2f}")
-# print(f"MAE: ${mae:,.2f}")
-# print(f"R²: {r2:.4f}")
-
-
-
-
+# ===============================
+# NOTES
+# ===============================
 # {'n_estimators': 600, 'min_samples_split': 10, 'min_samples_leaf': 4, 'max_features': 0.8, 'max_depth': 40, 'criterion': 'absolute_error'}
 
 # Random Forest Results:
