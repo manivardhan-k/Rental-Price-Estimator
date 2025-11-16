@@ -54,6 +54,14 @@ The app features a real-time **interactive map**, **dynamic validation**, **anim
 
 ---
 
+## 🌐 Live Demo
+
+You can access the Rental Price Estimator website online without installing anything locally:
+
+[https://manivardhank.pythonanywhere.com/](https://manivardhank.pythonanywhere.com/)
+
+---
+
 ## 📦 Folder Structure
 
 ```
