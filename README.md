@@ -110,7 +110,7 @@ project/
 ### **1. Clone repository**
 ```bash
 git clone https://github.com/manivardhan-k/Rental-Price-Estimator.git
-cd project-folder
+cd Rental-Price-Estimator
 ````
 
 ### **2. Install dependencies**
