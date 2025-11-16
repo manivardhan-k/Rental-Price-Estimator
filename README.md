@@ -213,10 +213,10 @@ Response example:
 
 ## 🌎 Data Sources
 
-* Historical price data: Zillow Research
-* House listings dataset: Kaggle – USA Housing Listings
-* US States & Cities dataset: Kaggle
-* Map tiles: OpenStreetMap
+* Historical price data: [Zillow Research](https://www.zillow.com/research/data/)
+* House listings dataset: [Kaggle – USA Housing Listings](https://www.kaggle.com/datasets/austinreese/usa-housing-listings)
+* US States & Cities dataset: [Kaggle US Cities Dataset](https://www.kaggle.com/datasets/jeffersonangelareche/us-cities-states-countries)
+* Map tiles: [OpenStreetMap](https://www.openstreetmap.org/)
 
 ---
 
