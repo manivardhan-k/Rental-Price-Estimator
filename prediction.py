@@ -56,23 +56,24 @@ for feature in features:
 # }
 
 '''
-boston,
-2485, price - 1973
-apartment,
-1000,
-2,
-2.0,
-1,
-1,
-0,
-0,
-0,
-0,
-1,
-1,
-42.2093,
--70.9963,
-ma
+{
+  "sqft": 1200,
+  "beds": 3,
+  "baths": 2,
+  "type": "apartment",
+  "state": "CA",
+  "city": "Los Angeles",
+  "lat": 34.05,
+  "long": -118.24,
+  "cats_allowed": 1,
+  "dogs_allowed": 0,
+  "smoking_allowed": 0,
+  "wheelchair_access": 0,
+  "comes_furnished": 0,
+  "electric_vehicle_charge": 0,
+  "has_laundry": 1,
+  "has_parking": 1
+}
 '''
 
 # ===============================

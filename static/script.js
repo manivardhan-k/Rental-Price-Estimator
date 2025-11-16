@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let citiesByState = {};
   
   try {
-    const response = await fetch('us-cities.json');
+    const response = await fetch('/static/us-cities.json');
     if (!response.ok) throw new Error("City data load failed");
     citiesByState = await response.json();
   } catch (error) {

@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Price Prediction App</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Rental Price Estimator</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons8-house-price-53.png') }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
@@ -235,8 +237,8 @@
   </section>
 
   <script src="https://cdn.jsdelivr.net/npm/chroma-js@2.4.2/chroma.min.js"></script>
-  <script src="script.js"></script>
-  <script src="canvas.js"></script>
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+  <script src="{{ url_for('static', filename='canvas.js') }}"></script>
 
 </body>
 </html>

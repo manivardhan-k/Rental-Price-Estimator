@@ -4,7 +4,6 @@ pandas
 numpy
 scikit-learn
 joblib
-csv
 json
 random
 os

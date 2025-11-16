@@ -1,6 +1,6 @@
 # pip install -r requirements.txt
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import pandas as pd
 import numpy as np
@@ -13,13 +13,27 @@ CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all routes
 # ===============================
 # LOAD MODELS AND ENCODERS
 # ===============================
-rf_loaded = joblib.load('pkls/random_forest_model.pkl')
-encoder = joblib.load('pkls/target_encoder.pkl')
-label_encoders = joblib.load('pkls/label_encoders.pkl')
-scaler = joblib.load('pkls/scaler.pkl')
+# rf_loaded = joblib.load('pkls/random_forest_model.pkl')
+# encoder = joblib.load('pkls/target_encoder.pkl')
+# label_encoders = joblib.load('pkls/label_encoders.pkl')
+# scaler = joblib.load('pkls/scaler.pkl')
+
+# 1. Get the directory of the current script (app.py)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 2. Construct the full path to the pkls folder
+PKLS_DIR = os.path.join(BASE_DIR, 'pkls')
+CSVS_DIR = os.path.join(BASE_DIR, 'csvs')
+
+# 3. Load files using the constructed absolute path
+rf_loaded = joblib.load(os.path.join(PKLS_DIR, 'random_forest_model_compressed.pkl'))
+encoder = joblib.load(os.path.join(PKLS_DIR, 'target_encoder.pkl'))
+label_encoders = joblib.load(os.path.join(PKLS_DIR, 'label_encoders.pkl'))
+scaler = joblib.load(os.path.join(PKLS_DIR, 'scaler.pkl'))
 
 # Load historic data for CAGR calculations
-historic_df = pd.read_csv("csvs/state_historic.csv")
+# historic_df = pd.read_csv("csvs/state_historic.csv")
+historic_df = pd.read_csv(os.path.join(CSVS_DIR, "state_historic.csv"))
 historic_df['state'] = historic_df['state'].str.strip().str.lower()
 
 # Get all year columns (2015-2025)
@@ -35,16 +49,7 @@ state_growth = historic_df.groupby('state')[['2020', '2025']].apply(
 # ===============================
 @app.route('/')
 def index():
-    return send_from_directory('static', 'index.html')
-
-@app.route('/<path:path>')
-def serve_files(path):
-    if os.path.exists(os.path.join('static', path)):
-        return send_from_directory('static', path)
-    elif os.path.exists(path):
-        return send_from_directory('.', path)
-    else:
-        return "File not found", 404
+    return render_template('index.html')
 
 # ===============================
 # VALIDATION HELPER FUNCTION
