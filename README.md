@@ -109,7 +109,7 @@ project/
 
 ### **1. Clone repository**
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/manivardhan-k/Rental-Price-Estimator.git
 cd project-folder
 ````
 
