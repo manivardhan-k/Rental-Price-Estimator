@@ -330,12 +330,12 @@ async function geocodeAddress(street, city, state, zip) {
     if (street) addressStr += street + ', ';
     if (city) addressStr += city + ', ';
     if (state) addressStr += state + ', ';
-    if (zip) addressStr += zip;
+    if (zip) addressStr += zip + ', USA';
     addressStr = addressStr.replace(/,\s*$/, '');
-    
+
     const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressStr)}&format=json`);
     const data = await response.json();
-    
+
     if (data.length > 0) {
       return { lat: parseFloat(data[0].lat), long: parseFloat(data[0].lon) };
     } else {
@@ -377,11 +377,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   const toggleBtn = document.getElementById('toggle-location-btn');
   const latLong = document.querySelector('.lat-long');
   const streetZip = document.querySelector('.street-zip');
-  
+
   // Initialize display state
   latLong.style.display = 'flex';
   streetZip.style.display = 'none';
-  
+
   toggleBtn.addEventListener('click', () => {
     useAddressMode = !useAddressMode;
     if (useAddressMode) {
@@ -399,14 +399,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const inputs = document.querySelectorAll(".input-group input[type='text']");
   inputs.forEach(input => {
     const placeholderLength = input.placeholder.length;
-    input.style.width = `${placeholderLength - 1}ch`; 
+    input.style.width = `${placeholderLength - 1}ch`;
   });
 
   // STATE AND CITY DROPDOWNS
   const stateSelect = document.getElementById('state');
   const citySelect = document.getElementById('city');
   let citiesByState = {};
-  
+
   try {
     const response = await fetch('/static/us-cities.json');
     if (!response.ok) throw new Error("City data load failed");
@@ -415,10 +415,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('Error loading cities:', error);
     citySelect.disabled = true;
   }
-  
+
   makeSelectSearchable(stateSelect);
   makeSelectSearchable(citySelect);
-  
+
   stateSelect.addEventListener("change", () => {
     const stateAbbr = stateSelect.value;
     const cityList = citiesByState[stateAbbr] || [];
@@ -431,7 +431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     citySelect.disabled = cityList.length === 0;
   });
-  
+
   // SEARCH BUTTON HANDLER
   document.getElementById('search-btn').addEventListener('click', async () => {
     try {
@@ -440,12 +440,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const searchBtn = document.getElementById('search-btn');
       const validation = validateRequiredFieldsForMode();
-      
+
       if (validation.hasErrors) {
         showError(validation.message);
         return;
       }
-      
+
       searchBtn.textContent = 'Loading...';
       searchBtn.disabled = true;
 
@@ -485,7 +485,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         has_parking: document.getElementById('has_parking').checked ? 1 : 0
       };
 
-      const response = await fetch('http://127.0.0.1:5000/predict', {
+      const response = await fetch('/predict', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -524,7 +524,7 @@ function makeSelectSearchable(selectElement) {
   const options = Array.from(selectElement.options);
   let searchText = '';
   let searchTimeout;
-  
+
   selectElement.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       searchText = '';
@@ -535,8 +535,8 @@ function makeSelectSearchable(selectElement) {
       searchText += e.key.toLowerCase();
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => { searchText = ''; }, 1000);
-      
-      const matchingOption = options.find(option => 
+
+      const matchingOption = options.find(option =>
         option.textContent.toLowerCase().startsWith(searchText)
       );
       if (matchingOption) {
@@ -652,7 +652,7 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
         font: { color: '#ff7f0e', size: 12, family: 'Arial' }
       });
     }
-  
+
     // 2020 historical price
     const idx2020Hist = histYears.indexOf('2020');
     if (idx2020Hist !== -1) {
@@ -665,7 +665,7 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
-  
+
     // 2025 historical price
     const idx2025Hist = histYears.indexOf('2025');
     if (idx2025Hist !== -1) {
@@ -678,7 +678,7 @@ function createHistoricalChart(historicalPrices, predictedPrices = {}, state = "
         font: { color: '#4f0074', size: 12, family: 'Arial' }
       });
     }
-  
+
     // 2025 predicted price
     const idx2025Pred = predYears.indexOf('2025');
     if (idx2025Pred !== -1) {
