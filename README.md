@@ -54,6 +54,14 @@ The app features a real-time **interactive map**, **dynamic validation**, **anim
 
 ---
 
+## 🌐 Live Demo
+
+You can access the Rental Price Estimator website online without installing anything locally:
+
+[https://manivardhank.pythonanywhere.com/](https://manivardhank.pythonanywhere.com/)
+
+---
+
 ## 📦 Folder Structure
 
 ```
@@ -109,8 +117,8 @@ project/
 
 ### **1. Clone repository**
 ```bash
-git clone <your-repo-url>
-cd project-folder
+git clone https://github.com/manivardhan-k/Rental-Price-Estimator.git
+cd Rental-Price-Estimator
 ````
 
 ### **2. Install dependencies**
@@ -205,10 +213,10 @@ Response example:
 
 ## 🌎 Data Sources
 
-* Historical price data: Zillow Research
-* House listings dataset: Kaggle – USA Housing Listings
-* US States & Cities dataset: Kaggle
-* Map tiles: OpenStreetMap
+* Historical price data: [Zillow Research](https://www.zillow.com/research/data/)
+* House listings dataset: [Kaggle – USA Housing Listings](https://www.kaggle.com/datasets/austinreese/usa-housing-listings)
+* US States & Cities dataset: [Kaggle US Cities Dataset](https://www.kaggle.com/datasets/jeffersonangelareche/us-cities-states-countries)
+* Map tiles: [OpenStreetMap](https://www.openstreetmap.org/)
 
 ---
 
@@ -223,3 +231,4 @@ Predicted values are **estimates only** and should **not** be used for investmen
 **Mani Vardhan Kumpatla**
 Portfolio: [https://manivardhan-k.github.io/Portfolio/](https://manivardhan-k.github.io/Portfolio/)
 
+---
