@@ -226,6 +226,14 @@ Predicted values are **estimates only** and should **not** be used for investmen
 
 ---
 
+## Third-Party Code
+
+- CSS from "SVG Gradient Wave Generator" by supah
+  https://codepen.io/supah/pen/prVVOx
+  MIT License
+
+---
+
 ## 👨‍💻 Developer
 
 **Mani Vardhan Kumpatla**
